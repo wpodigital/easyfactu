@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<servicioConsultasDirectas>
+  <error>
+    <descripcionError>Identificador no válido o sin permisos</descripcionError>
+  </error>
+</servicioConsultasDirectas>

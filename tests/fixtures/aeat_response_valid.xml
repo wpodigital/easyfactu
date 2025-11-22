@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<servicioConsultasDirectas>
+  <respuestaCorrecta>
+    <ejercicio>2024</ejercicio>
+    <modelo>303</modelo>
+    <periodo>01</periodo>
+    <nif>B12345678</nif>
+    <csv>ABCDEFGHIJKLMNOP</csv>
+    <expediente>EXP2024000000000000001</expediente>
+    <justificante>JST0000000001</justificante>
+    <fechaYHoraPresentacion>2024-07-15T10:30:00Z</fechaYHoraPresentacion>
+  </respuestaCorrecta>
+  <respuestaCorrecta>
+    <ejercicio>2024</ejercicio>
+    <modelo>347</modelo>
+    <periodo>12</periodo>
+    <nif>A87654321</nif>
+    <csv>1234567890ABCDEF</csv>
+    <expediente>EXP2024000000000000002</expediente>
+    <justificante>JST0000000000002</justificante>
+    <just_anterior>JST0000000000001</just_anterior>
+    <fechaYHoraPresentacion>2024-08-01T09:15:00+02:00</fechaYHoraPresentacion>
+  </respuestaCorrecta>
+</servicioConsultasDirectas>
