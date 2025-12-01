@@ -1,0 +1,18 @@
+position,name,description,type,format,max_length,required,example,notes
+1,nif_emisor,NIF (VAT number) of the invoice issuer,string,NIF/NIE/VAT,20,true,B12345678,Must be a valid Spanish NIF/NIE format
+2,numero_factura,Invoice number,string,,60,true,2024/001234,May include series prefix
+3,fecha_expedicion,Invoice issue date,string,date,,true,01-12-2024,Confirm format: DD-MM-YYYY or YYYY-MM-DD
+4,importe_total,Total invoice amount including taxes,number,decimal(2),,true,1210.50,Two decimal places
+5,huella,Hash/fingerprint of the invoice data,string,hash,,computed,BxiYftn7g3ckzVH32hQownFIVPEncalsr/JRZi70GR0=,SHA-256 Base64 encoded (computed from fields 1-4)
+,,,,,,,
+# Optional fields (confirm if required),,,,,,,,
+,base_imponible,Tax base amount,number,decimal(2),,false,1000.00,May be required in some versions
+,cuota_iva,VAT amount,number,decimal(2),,false,210.00,May be required in some versions
+,nif_destinatario,NIF (VAT number) of the invoice receiver,string,NIF/NIE/VAT,20,false,A87654321,May be required for B2B invoices
+,serie_factura,Invoice series,string,,20,false,A,May be separate from invoice number
+,,,,,,,
+# Notes,,,,,,,,
+# - All string fields should be trimmed and NFC-normalized,,,,,,,,
+# - Confirm the exact order of fields with the official specification,,,,,,,,
+# - Confirm the separator character (| or ; or other),,,,,,,,
+# - Confirm hash algorithm (SHA-256) and encoding (Base64 vs hex),,,,,,,,

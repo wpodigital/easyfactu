@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wpodigital/easyfactu/docs/specs/converted/DetalleEspecificacTecnCodigoQRfactura/qr_schema.json",
+  "title": "Veri-Factu QR Code Payload Schema",
+  "description": "JSON Schema for validating invoice QR code payloads (v0.4.7)",
+  "type": "object",
+  "required": [
+    "nif_emisor",
+    "numero_factura",
+    "fecha_expedicion",
+    "importe_total"
+  ],
+  "properties": {
+    "nif_emisor": {
+      "type": "string",
+      "title": "NIF Emisor",
+      "description": "NIF (VAT number) of the invoice issuer",
+      "pattern": "^[A-Z][0-9]{7}[A-Z0-9]$|^[0-9]{8}[A-Z]$|^[XYZ][0-9]{7}[A-Z]$",
+      "maxLength": 20,
+      "examples": ["B12345678", "12345678A", "X1234567A"]
+    },
+    "numero_factura": {
+      "type": "string",
+      "title": "Número de Factura",
+      "description": "Invoice number/series",
+      "minLength": 1,
+      "maxLength": 60,
+      "examples": ["2024/001234", "F-2024-0001"]
+    },
+    "fecha_expedicion": {
+      "type": "string",
+      "title": "Fecha de Expedición",
+      "description": "Invoice issue date (format: DD-MM-YYYY)",
+      "pattern": "^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-[0-9]{4}$",
+      "examples": ["01-12-2024", "15-06-2024"]
+    },
+    "importe_total": {
+      "type": "number",
+      "title": "Importe Total",
+      "description": "Total invoice amount including taxes",
+      "minimum": 0,
+      "examples": [1210.50, 100.00]
+    },
+    "base_imponible": {
+      "type": "number",
+      "title": "Base Imponible",
+      "description": "Tax base amount (may be required)",
+      "minimum": 0,
+      "examples": [1000.00]
+    },
+    "cuota_iva": {
+      "type": "number",
+      "title": "Cuota IVA",
+      "description": "VAT amount (may be required)",
+      "minimum": 0,
+      "examples": [210.00]
+    },
+    "nif_destinatario": {
+      "type": "string",
+      "title": "NIF Destinatario",
+      "description": "NIF (VAT number) of the invoice receiver (may be required)",
+      "pattern": "^[A-Z][0-9]{7}[A-Z0-9]$|^[0-9]{8}[A-Z]$|^[XYZ][0-9]{7}[A-Z]$",
+      "maxLength": 20,
+      "examples": ["A87654321"]
+    },
+    "serie_factura": {
+      "type": "string",
+      "title": "Serie Factura",
+      "description": "Invoice series (may be separate from number)",
+      "maxLength": 20,
+      "examples": ["A", "2024"]
+    },
+    "huella": {
+      "type": "string",
+      "title": "Huella",
+      "description": "Hash/fingerprint of the invoice data (SHA-256, Base64 encoded)",
+      "examples": ["2hf8d9sKj3nDk29dL/s8f=="]
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "nif_pattern": {
+      "description": "Spanish NIF/NIE validation pattern",
+      "pattern": "^[A-Z][0-9]{7}[A-Z0-9]$|^[0-9]{8}[A-Z]$|^[XYZ][0-9]{7}[A-Z]$"
+    },
+    "date_pattern_ddmmyyyy": {
+      "description": "Date format DD-MM-YYYY",
+      "pattern": "^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-[0-9]{4}$"
+    },
+    "date_pattern_yyyymmdd": {
+      "description": "Date format YYYY-MM-DD",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
+    }
+  }
+}

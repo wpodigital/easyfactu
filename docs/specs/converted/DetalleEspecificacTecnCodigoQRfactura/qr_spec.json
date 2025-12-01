@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Veri-Factu QR Code Specification",
+  "description": "Machine-readable specification for invoice QR codes (DetalleEspecificacTecnCodigoQRfactura v0.4.7)",
+  "version": "0.4.7",
+  "spec_source": "DetalleEspecificacTecnCodigoQRfactura.pdf",
+  "encoding": {
+    "charset": "UTF-8",
+    "normalization": "NFC",
+    "separator": "|",
+    "separator_notes": "Confirm separator character with official PDF specification"
+  },
+  "hash": {
+    "algorithm": "SHA-256",
+    "encoding": "base64",
+    "encoding_notes": "Confirm encoding: base64, base64url, or hex",
+    "input_notes": "Hash is computed over the concatenated payload before the hash field itself"
+  },
+  "qr_config": {
+    "error_correction": "M",
+    "version": "auto",
+    "module_size": 4,
+    "quiet_zone": 4
+  },
+  "fields": [
+    {
+      "position": 1,
+      "name": "nif_emisor",
+      "description": "NIF (VAT number) of the invoice issuer",
+      "type": "string",
+      "max_length": 20,
+      "required": true,
+      "format": "NIF/NIE/VAT",
+      "example": "B12345678"
+    },
+    {
+      "position": 2,
+      "name": "numero_factura",
+      "description": "Invoice number",
+      "type": "string",
+      "max_length": 60,
+      "required": true,
+      "example": "2024/001234"
+    },
+    {
+      "position": 3,
+      "name": "fecha_expedicion",
+      "description": "Invoice issue date",
+      "type": "string",
+      "format": "date",
+      "date_format": "DD-MM-YYYY",
+      "date_format_notes": "Confirm date format: DD-MM-YYYY or YYYY-MM-DD",
+      "required": true,
+      "example": "01-12-2024"
+    },
+    {
+      "position": 4,
+      "name": "importe_total",
+      "description": "Total invoice amount including taxes",
+      "type": "number",
+      "format": "decimal",
+      "precision": 2,
+      "required": true,
+      "example": 1210.50
+    },
+    {
+      "position": 5,
+      "name": "huella",
+      "description": "Hash/fingerprint of the invoice data (computed, not provided)",
+      "type": "string",
+      "format": "hash",
+      "algorithm": "SHA-256",
+      "encoding": "base64",
+      "required": false,
+      "computed": true,
+      "example": "2hf8d9sKj3nDk29dL/s8f=="
+    }
+  ],
+  "additional_fields_notes": [
+    "The following fields may be required depending on the specification version:",
+    "- Base imponible (tax base)",
+    "- Cuota IVA (VAT amount)",
+    "- NIF destinatario (receiver NIF)",
+    "- Serie factura (invoice series)",
+    "Please confirm with the official PDF specification"
+  ],
+  "validation_rules": [
+    {
+      "rule": "nif_format",
+      "description": "NIF must be a valid Spanish NIF/NIE format",
+      "regex": "^[A-Z][0-9]{7}[A-Z0-9]$|^[0-9]{8}[A-Z]$|^[XYZ][0-9]{7}[A-Z]$"
+    },
+    {
+      "rule": "amount_format",
+      "description": "Amounts must be formatted with 2 decimal places",
+      "format": "%.2f"
+    },
+    {
+      "rule": "date_format",
+      "description": "Dates must follow the specified format",
+      "format": "DD-MM-YYYY"
+    }
+  ],
+  "url_template": {
+    "base_url": "https://www2.agenciatributaria.gob.es/wlpl/TGVI-JDIT/QueryQR",
+    "parameters": [
+      "nif",
+      "numserie",
+      "fecha",
+      "importe"
+    ],
+    "notes": "Confirm the exact URL and parameter names with the official specification"
+  }
+}
