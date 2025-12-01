@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/wpodigital/easyfactu/docs/specs/converted/DetalleEspecificacTecnCodigoQRfactura/qr_schema.json",
+  "$id": "https://raw.githubusercontent.com/wpodigital/easyfactu/main/docs/specs/converted/DetalleEspecificacTecnCodigoQRfactura/qr_schema.json",
   "title": "Veri-Factu QR Code Payload Schema",
   "description": "JSON Schema for validating invoice QR code payloads (v0.4.7)",
   "type": "object",

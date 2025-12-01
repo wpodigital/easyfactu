@@ -101,7 +101,7 @@ function computeHash(payload, encoding = 'base64') {
  * @returns {Object} - Payload and hash
  */
 function buildPayload(invoice, spec) {
-    const separator = spec.encoding.separator || '|';
+    const separator = spec.encoding?.separator || '|';
     const fields = [];
     
     // Build payload from ordered fields
@@ -141,7 +141,7 @@ function buildPayload(invoice, spec) {
     const payloadWithoutHash = fields.join(separator);
     
     // Compute hash
-    const hashEncoding = spec.hash.encoding || 'base64';
+    const hashEncoding = spec.hash?.encoding || 'base64';
     const hash = computeHash(payloadWithoutHash, hashEncoding);
     
     // Final payload with hash

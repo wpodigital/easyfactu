@@ -1,5 +1,4 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Veri-Factu QR Code Specification",
   "description": "Machine-readable specification for invoice QR codes (DetalleEspecificacTecnCodigoQRfactura v0.4.7)",
   "version": "0.4.7",
