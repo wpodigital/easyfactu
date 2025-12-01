@@ -108,6 +108,11 @@ function buildPayload(invoice, spec) {
     for (const field of spec.fields) {
         const value = invoice[field.name];
         
+        // Skip computed fields (like hash) - they are computed later
+        if (field.computed) {
+            continue;
+        }
+        
         if (field.required && (value === undefined || value === null)) {
             throw new Error(`Required field missing: ${field.name}`);
         }

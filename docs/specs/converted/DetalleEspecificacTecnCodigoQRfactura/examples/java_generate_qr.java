@@ -192,6 +192,16 @@ public class java_generate_qr {
      * Generate QR code image from payload.
      * Note: Requires ZXing library (com.google.zxing)
      *
+     * To enable QR generation, add these Maven dependencies:
+     *   - com.google.zxing:core:3.5.2
+     *   - com.google.zxing:javase:3.5.2
+     *
+     * And add these imports at the top of the file:
+     *   import com.google.zxing.BarcodeFormat;
+     *   import com.google.zxing.client.j2se.MatrixToImageWriter;
+     *   import com.google.zxing.common.BitMatrix;
+     *   import com.google.zxing.qrcode.QRCodeWriter;
+     *
      * @param payload    QR code payload
      * @param outputPath Output file path
      * @param width      Image width
@@ -202,35 +212,25 @@ public class java_generate_qr {
         System.out.println("Add the following Maven dependencies:");
         System.out.println("  - com.google.zxing:core:3.5.2");
         System.out.println("  - com.google.zxing:javase:3.5.2");
-        System.out.println("\nTo generate the QR image, uncomment the ZXing code below:");
-        System.out.println("/* Uncomment to enable QR generation:");
-        System.out.println("import com.google.zxing.BarcodeFormat;");
-        System.out.println("import com.google.zxing.client.j2se.MatrixToImageWriter;");
-        System.out.println("import com.google.zxing.common.BitMatrix;");
-        System.out.println("import com.google.zxing.qrcode.QRCodeWriter;");
-        System.out.println("");
-        System.out.println("QRCodeWriter qrWriter = new QRCodeWriter();");
-        System.out.println("BitMatrix bitMatrix = qrWriter.encode(payload, BarcodeFormat.QR_CODE, width, height);");
-        System.out.println("Path path = Paths.get(outputPath);");
-        System.out.println("MatrixToImageWriter.writeToPath(bitMatrix, \"PNG\", path);");
-        System.out.println("*/");
+        System.out.println("\nThen add the following imports at the top of the file:");
+        System.out.println("  import com.google.zxing.BarcodeFormat;");
+        System.out.println("  import com.google.zxing.client.j2se.MatrixToImageWriter;");
+        System.out.println("  import com.google.zxing.common.BitMatrix;");
+        System.out.println("  import com.google.zxing.qrcode.QRCodeWriter;");
+        System.out.println("\nExample code to generate QR image:");
+        System.out.println("  QRCodeWriter qrWriter = new QRCodeWriter();");
+        System.out.println("  BitMatrix bitMatrix = qrWriter.encode(payload, BarcodeFormat.QR_CODE, width, height);");
+        System.out.println("  Path path = Paths.get(outputPath);");
+        System.out.println("  MatrixToImageWriter.writeToPath(bitMatrix, \"PNG\", path);");
 
         // Uncomment to enable QR generation with ZXing:
+        // (add imports at the top of the file and ZXing dependencies)
         /*
-        try {
-            import com.google.zxing.BarcodeFormat;
-            import com.google.zxing.client.j2se.MatrixToImageWriter;
-            import com.google.zxing.common.BitMatrix;
-            import com.google.zxing.qrcode.QRCodeWriter;
-
-            QRCodeWriter qrWriter = new QRCodeWriter();
-            BitMatrix bitMatrix = qrWriter.encode(payload, BarcodeFormat.QR_CODE, width, height);
-            Path path = Paths.get(outputPath);
-            MatrixToImageWriter.writeToPath(bitMatrix, "PNG", path);
-            System.out.println("\nQR Code image saved to: " + outputPath);
-        } catch (Exception e) {
-            System.err.println("Error generating QR code: " + e.getMessage());
-        }
+        QRCodeWriter qrWriter = new QRCodeWriter();
+        BitMatrix bitMatrix = qrWriter.encode(payload, BarcodeFormat.QR_CODE, width, height);
+        Path path = Paths.get(outputPath);
+        MatrixToImageWriter.writeToPath(bitMatrix, "PNG", path);
+        System.out.println("\nQR Code image saved to: " + outputPath);
         */
     }
 

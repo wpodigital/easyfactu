@@ -66,12 +66,12 @@
     {
       "position": 5,
       "name": "huella",
-      "description": "Hash/fingerprint of the invoice data (computed, not provided)",
+      "description": "Hash/fingerprint of the invoice data (computed, not provided in input)",
       "type": "string",
       "format": "hash",
       "algorithm": "SHA-256",
       "encoding": "base64",
-      "required": false,
+      "required": true,
       "computed": true,
       "example": "2hf8d9sKj3nDk29dL/s8f=="
     }

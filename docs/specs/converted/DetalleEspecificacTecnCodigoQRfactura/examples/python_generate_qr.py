@@ -75,14 +75,22 @@ def format_date(value: date | datetime | str, fmt: str = 'DD-MM-YYYY') -> str:
     Format a date according to the specification.
     
     Args:
-        value: The date to format
-        fmt: Date format ('DD-MM-YYYY' or 'YYYY-MM-DD')
+        value: The date to format (accepts ISO format YYYY-MM-DD or date objects)
+        fmt: Output date format ('DD-MM-YYYY' or 'YYYY-MM-DD')
         
     Returns:
         Formatted date string
     """
     if isinstance(value, str):
-        value = datetime.fromisoformat(value).date()
+        # Try ISO format first (YYYY-MM-DD), then DD-MM-YYYY
+        try:
+            value = datetime.strptime(value, '%Y-%m-%d').date()
+        except ValueError:
+            try:
+                value = datetime.strptime(value, '%d-%m-%Y').date()
+            except ValueError:
+                # Fallback to fromisoformat for other ISO formats
+                value = datetime.fromisoformat(value).date()
     elif isinstance(value, datetime):
         value = value.date()
     
@@ -129,6 +137,10 @@ def build_payload(invoice: dict, spec: dict) -> dict:
     for field in spec.get('fields', []):
         name = field['name']
         value = invoice.get(name)
+        
+        # Skip computed fields (like hash) - they are computed later
+        if field.get('computed', False):
+            continue
         
         if field.get('required', False) and value is None:
             raise ValueError(f"Required field missing: {name}")

@@ -3,7 +3,7 @@ position,name,description,type,format,max_length,required,example,notes
 2,numero_factura,Invoice number,string,,60,true,2024/001234,May include series prefix
 3,fecha_expedicion,Invoice issue date,string,date,,true,01-12-2024,Confirm format: DD-MM-YYYY or YYYY-MM-DD
 4,importe_total,Total invoice amount including taxes,number,decimal(2),,true,1210.50,Two decimal places
-5,huella,Hash/fingerprint of the invoice data,string,hash,,computed,BxiYftn7g3ckzVH32hQownFIVPEncalsr/JRZi70GR0=,SHA-256 Base64 encoded (computed from fields 1-4)
+5,huella,Hash/fingerprint of the invoice data,string,hash,,true (computed),BxiYftn7g3ckzVH32hQownFIVPEncalsr/JRZi70GR0=,SHA-256 Base64 encoded (computed from fields 1-4)
 ,,,,,,,
 # Optional fields (confirm if required),,,,,,,,
 ,base_imponible,Tax base amount,number,decimal(2),,false,1000.00,May be required in some versions
