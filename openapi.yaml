@@ -1,0 +1,69 @@
+openapi: 3.0.3
+info:
+  title: EasyFactu Signing API (scaffold)
+  version: "0.1.0"
+servers:
+  - url: https://api.example.local
+paths:
+  /records:
+    post:
+      summary: Upload a record (XML/JSON)
+      requestBody:
+        required: true
+        content:
+          application/xml: {}
+          application/json: {}
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+  /records/{id}/canonicalize:
+    get:
+      summary: Get canonicalized string and hash for record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Canonicalization result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  canonical:
+                    type: string
+                  sha256:
+                    type: string
+  /records/{id}/verify:
+    get:
+      summary: Verify a signed package
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string
