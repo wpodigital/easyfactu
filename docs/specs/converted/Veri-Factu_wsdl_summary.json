@@ -1,0 +1,40 @@
+{
+  "title": "SistemaFacturacion (AEAT) - WSDL summary",
+  "source_wsdl": "docs/schema/SistemaFacturacion.wsdl",
+  "extraction_date": "2025-12-01",
+  "services": [
+    {
+      "name": "sfVerifactu",
+      "ports": [
+        {"name":"SistemaVerifactu","environment":"production","binding":"sfVerifactu","endpoint":"https://www1.agenciatributaria.gob.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP"},
+        {"name":"SistemaVerifactuSello","environment":"production-sello","binding":"sfVerifactu","endpoint":"https://www10.agenciatributaria.gob.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP"},
+        {"name":"SistemaVerifactuPruebas","environment":"staging","binding":"sfVerifactu","endpoint":"https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP"},
+        {"name":"SistemaVerifactuSelloPruebas","environment":"staging-sello","binding":"sfVerifactu","endpoint":"https://prewww10.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP"}
+      ],
+      "operations": [
+        {"name":"RegFactuSistemaFacturacion","input":"sfLR:RegFactuSistemaFacturacion","output":"sfR:RespuestaRegFactuSistemaFacturacion"},
+        {"name":"ConsultaFactuSistemaFacturacion","input":"sfLRC:ConsultaFactuSistemaFacturacion","output":"sfLRRC:RespuestaConsultaFactuSistemaFacturacion"}
+      ]
+    },
+    {
+      "name": "sfRequerimiento",
+      "ports": [
+        {"name":"SistemaRequerimiento","environment":"production","binding":"sfRequerimiento","endpoint":"https://www1.agenciatributaria.gob.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/RequerimientoSOAP"},
+        {"name":"SistemaRequerimientoSello","environment":"production-sello","binding":"sfRequerimiento","endpoint":"https://www10.agenciatributaria.gob.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/RequerimientoSOAP"},
+        {"name":"SistemaRequerimientoPruebas","environment":"staging","binding":"sfRequerimiento","endpoint":"https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/RequerimientoSOAP"},
+        {"name":"SistemaRequerimientoSelloPruebas","environment":"staging-sello","binding":"sfRequerimiento","endpoint":"https://prewww10.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/RequerimientoSOAP"}
+      ],
+      "operations": [
+        {"name":"RegFactuSistemaFacturacion","input":"sfLR:RegFactuSistemaFacturacion","output":"sfR:RespuestaRegFactuSistemaFacturacion"}
+      ]
+    }
+  ],
+  "xsd_references": [
+    "docs/SuministroInformacion.xsd",
+    "docs/SuministroLR.xsd",
+    "docs/ConsultaLR.xsd",
+    "docs/RespuestaConsultaLR.xsd",
+    "docs/RespuestaSuministro.xsd"
+  ],
+  "notes": "Summary generated from the provided WSDL. Examples and schemas to be validated against XSDs in docs/"
+}
