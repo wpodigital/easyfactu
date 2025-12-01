@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "ValidacionNoVerifactu Response Schema",
   "description": "JSON Schema for validating response payloads from the No VERI*FACTU validation service",
   "version": "0.2",
@@ -39,7 +39,7 @@
         "Subsanacion": {
           "type": "string",
           "enum": ["S", "N", "f"],
-          "description": "Indicador de subsanación"
+          "description": "Indicador de subsanación (Note: 'f' appears in error examples in the original PDF)"
         },
         "RechazoPrevio": {
           "type": "string",
