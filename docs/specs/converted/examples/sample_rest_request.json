@@ -1,0 +1,1 @@
+{\n  "request": {\n    "endpoint": "/api/verifactu/v1/verify",\n    "method": "POST",\n    "content_type": "application/json",\n    "body": {\n      "issuer_vat": "ES12345678A",\n      "invoice_number": "F123-2025",\n      "total_amount": 100.00\n    }\n  }\n}
