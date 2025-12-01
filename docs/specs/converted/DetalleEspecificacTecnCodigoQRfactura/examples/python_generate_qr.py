@@ -19,7 +19,7 @@ import json
 import unicodedata
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Union
 
 # Optional: Install 'qrcode' and 'pillow' for QR image generation
 # pip install qrcode[pil]
@@ -70,7 +70,7 @@ def format_amount(value: float, precision: int = 2) -> str:
     return f"{value:.{precision}f}"
 
 
-def format_date(value: date | datetime | str, fmt: str = 'DD-MM-YYYY') -> str:
+def format_date(value: Union[date, datetime, str], fmt: str = 'DD-MM-YYYY') -> str:
     """
     Format a date according to the specification.
     
