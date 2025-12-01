@@ -1,0 +1,8 @@
+id,name,type,required,example
+version,Spec version,string,true,0.4.7
+emitter_nif,NIF emisor,string,true,B12345678
+invoice_number,Número de factura,string,true,FAC-2025-0001
+issue_date,Fecha de expedición,date,true,2025-11-30
+total_amount,Importe total,number,true,1234.56
+currency,Moneda,string,true,EUR
+hash,Huella / hash,string,true,q1+2...==

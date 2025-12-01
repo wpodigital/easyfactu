@@ -1,0 +1,14 @@
+{
+  "title": "DetalleEspecificacTecnCodigoQRfactura (v0.4.7) - machine readable",
+  "version": "0.4.7-converted",
+  "source_file": "docs/DetalleEspecificacTecnCodigoQRfactura.pdf",
+  "fields": [
+    { "id": "version", "name": "Spec version", "type": "string", "example": "0.4.7", "required": true },
+    { "id": "emitter_nif", "name": "NIF emisor", "type": "string", "example": "B12345678", "required": true },
+    { "id": "invoice_number", "name": "Número de factura", "type": "string", "example": "FAC-2025-0001", "required": true },
+    { "id": "issue_date", "name": "Fecha de expedición", "type": "date", "format": "YYYY-MM-DD", "example": "2025-11-30", "required": true },
+    { "id": "total_amount", "name": "Importe total", "type": "number", "format": "decimal", "example": "1234.56", "required": true },
+    { "id": "currency", "name": "Moneda", "type": "string", "example": "EUR", "required": true },
+    { "id": "hash", "name": "Huella / hash", "type": "string", "encoding": "base64", "example": "q1+2...==", "required": true }
+  ]
+}
