@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QR factura DetalleEspecificac (v0.4.7)",
+  "type": "object",
+  "required": ["version", "emitter_nif", "invoice_number", "issue_date", "total_amount", "currency", "hash"],
+  "properties": {
+    "version": { "type": "string" },
+    "emitter_nif": { "type": "string", "pattern": "^[A-Za-z0-9\-]{1,20}$" },
+    "invoice_number": { "type": "string", "maxLength": 50 },
+    "issue_date": { "type": "string", "format": "date" },
+    "total_amount": { "type": "number" },
+    "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+    "hash": { "type": "string" }
+  }
+}
