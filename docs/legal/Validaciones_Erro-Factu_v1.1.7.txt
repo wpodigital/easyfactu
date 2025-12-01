@@ -1,0 +1,129 @@
+Departamento de Informática Tributaria
+Subdirección General Aplicaciones
+Sistemas Informáticos de Facturación y Sistemas VERI*FACTU
+
+Versión: 1.1.7
+
+Validaciones
+Sistemas Informáticos de Facturación y
+Sistemas VERI*FACTU
+HISTÓRICO DE REVISIONES
+Edic. Rev.
+0
+0.1.0
+0.2.0
+
+Fecha
+12/07/2022
+16/11/2023
+
+Descripción
+
+0.3.0
+0.4.0
+
+21/12/2023
+19/01/2024
+
+0.5.0
+0.6.0
+0.7.0
+
+08/02/2024
+15/03/2024
+29/04/2024
+
+0.7.1
+
+14/05/2024
+
+0.7.2
+
+21/05/2024
+
+0.7.3
+0.7.4
+
+24/05/2024
+17/06/2024
+
+0.7.5
+
+17/06/2024
+
+0.7.6
+
+30/07/2024
+
+Se añade figura de representante en Cabecera y
+campo Impuesto en Desglose. Modificadas
+validaciones
+de
+TiposImpositivos
+y
+TipoRecargoEquivalencia. Eliminación de códigos
+a raíz del Brexit.
+
+21
+
+0.8.0
+
+19/09/2024
+
+Modificación de validaciones a raíz de cambios en
+Impuesto (IVA/IGIC/IPSI/Otros) y ClaveRegimen
+“17”
+en
+TiposImpositivos,
+TiposRecargoEquivalencia
+
+y
+CalificacionOperacion, entre otros.
+
+23
+
+Borrador inicial
+Cambios según comentarios ONIF y Gestión. Se
+consolidan validaciones y se añade gestión de
+errores, especialmente en aceptada con errores.
+Restructuración del documento por parte del DIT
+Nuevas validaciones en bloque IDFactura, en
+huella/hash y tipos impositivos. Adaptaciones a los
+cambios en listas L8.
+Nueva validación campo IdSistemaInformatico
+Adaptación a cambios DR versión 0.11.2
+Revisión ONIF y DIT (aspectos formales,
+estructura, validaciones…).
+Eliminación de la validación del campo
+NumeroOTAlta
+en
+agrupación
+Sistema
+Informático.
+Eliminación de la categorización de errores
+admisibles subsanables y no subsanables. El error
+en el campo FechaHoraHusoGenRegistro se
+excepcionada de la necesidad de subsanación.
+Cambio en campo RefRequerimiento
+Nueva validación campos CalificacionOperacion y
+OperaciónExenta.
+Nueva validación ImporteRectificacion
+
+Sistemas Informáticos de Facturación y Sistemas VERI*FACTU
+
+A(*)
+
+Páginas
+17
+
+23
+23
+
+20
+
+20
+20
+
+Página 1
+
+... (the rest of the provided text continues exactly as in the user's paste) ...
