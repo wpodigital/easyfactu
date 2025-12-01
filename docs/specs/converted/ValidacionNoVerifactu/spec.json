@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ValidacionNoVerifactu API Specification",
+  "description": "Machine-readable specification for the AEAT No VERI*FACTU validation service",
+  "version": "0.2",
+  "source_file": "docs/Descripcion_ServicioWeb_ValidacionNoVerifactu.pdf",
+  "service": {
+    "name": "Servicio de Validación de Registros No Verificables",
+    "short_name": "ValRegistroNoVerifactu",
+    "version": "1.0",
+    "protocol": "HTTPS",
+    "format": "XML",
+    "encoding": "UTF-8",
+    "authentication": {
+      "type": "client_certificate",
+      "description": "Certificado electrónico cualificado reconocido por la AEAT"
+    }
+  },
+  "endpoints": [
+    {
+      "id": "validacion_registro",
+      "name": "Validación de Registro NoVerifactu",
+      "description": "Validates a RegistroAlta or RegistroAnulacion XML document",
+      "environment": "test",
+      "url": "https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/ValRegistroNoVerifactu",
+      "method": "POST",
+      "content_type": "application/xml",
+      "request": {
+        "schema_url": "https://prewww2.aeat.es/static_files/common/internet/dep/aplicaciones/es/aeat/tikeV1.0/cont/ws/SuministroInformacion.xsd",
+        "root_elements": [
+          {
+            "name": "RegistroAlta",
+            "namespace": "https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd",
+            "description": "Registro de alta de factura"
+          },
+          {
+            "name": "RegistroAnulacion",
+            "namespace": "https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd",
+            "description": "Registro de anulación de factura"
+          }
+        ]
+      },
+      "response": {
+        "schema_url": "https://prewww2.aeat.es/static_files/common/internet/dep/aplicaciones/es/aeat/tikeV1.0/cont/ws/RespuestaValRegistNoVeriFactu.xsd",
+        "root_element": {
+          "name": "RespuestaValContenidoFactuSistemaFacturacion",
+          "namespace": "https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/RespuestaValRegistNoVeriFactu.xsd"
+        },
+        "status_codes": [
+          {
+            "code": "Correcto",
+            "description": "Registro aceptado - supera validaciones sintácticas y de negocio"
+          },
+          {
+            "code": "AceptadoConErrores",
+            "description": "Registro aceptado con errores admisibles"
+          },
+          {
+            "code": "Incorrecto",
+            "description": "Registro rechazado - errores no admisibles"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cliente_pruebas",
+      "name": "Cliente de Pruebas Web",
+      "description": "Web interface for testing the validation service",
+      "environment": "test",
+      "url": "https://preportal.aeat.es/PRE-Exteriores/Inicio/_menu_/VERI_FACTU___Sistemas_Informaticos_de_Facturacion/VERI_FACTU___Sistemas_Informaticos_de_Facturacion.html",
+      "method": "GET",
+      "type": "web_interface"
+    }
+  ],
+  "schemas": {
+    "input": {
+      "name": "SuministroInformacion.xsd",
+      "url": "https://prewww2.aeat.es/static_files/common/internet/dep/aplicaciones/es/aeat/tikeV1.0/cont/ws/SuministroInformacion.xsd",
+      "local_path": "docs/SuministroInformacion.xsd"
+    },
+    "output": {
+      "name": "RespuestaValRegistNoVeriFactu.xsd",
+      "url": "https://prewww2.aeat.es/static_files/common/internet/dep/aplicaciones/es/aeat/tikeV1.0/cont/ws/RespuestaValRegistNoVeriFactu.xsd",
+      "local_path": "docs/RespuestaValRegistNoVeriFactu.xsd"
+    }
+  },
+  "error_types": [
+    {
+      "type": "no_admisible",
+      "description": "Errores que provocan el rechazo del registro",
+      "result": "Incorrecto",
+      "examples": ["1123", "4102", "4109"]
+    },
+    {
+      "type": "admisible",
+      "description": "Errores que no provocan el rechazo del registro",
+      "result": "AceptadoConErrores",
+      "examples": ["2000"]
+    }
+  ],
+  "examples": {
+    "request": {
+      "registro_alta": "samples/registro_alta_request.xml",
+      "registro_anulacion": "samples/registro_anulacion_request.xml"
+    },
+    "response": {
+      "correcto": "samples/registro_alta_response_correcto.xml",
+      "aceptado_con_errores": "samples/registro_alta_response_aceptado_con_errores.xml",
+      "incorrecto": "samples/registro_alta_response_incorrecto.xml",
+      "error_formato": "samples/error_formato_xml.xml"
+    }
+  },
+  "notes": [
+    "Los XML No VERI*FACTU deben estar firmados, pero este servicio no valida la firma",
+    "Los NIFs se validan contra la Base de Datos Centralizada de la AEAT",
+    "Los espacios en blanco al inicio/final de campos se eliminan automáticamente"
+  ]
+}

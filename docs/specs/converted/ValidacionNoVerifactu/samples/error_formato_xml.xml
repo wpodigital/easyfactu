@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tikR:RespuestaValContenidoFactuSistemaFacturacion
+xmlns:tikR="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/RespuestaValRegistNoVeriFactu.xsd"
+xmlns:tik="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
+  <tikR:DescripcionErrorFormatoXML>Código[4102]. El XML no cumple el esquema. Falta informar campo obligatorio.: IDVersion</tikR:DescripcionErrorFormatoXML>
+</tikR:RespuestaValContenidoFactuSistemaFacturacion>

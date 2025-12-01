@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tikR:RespuestaValContenidoFactuSistemaFacturacion
+xmlns:tikR="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/RespuestaValRegistNoVeriFactu.xsd"
+xmlns:tik="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
+  <tikR:RespuestaValidacion>
+    <tikR:IDFactura>
+      <tik:IDEmisorFactura>89890001k</tik:IDEmisorFactura>
+      <tik:NumSerieFactura>12345678-G33</tik:NumSerieFactura>
+      <tik:FechaExpedicionFactura>03-02-2025</tik:FechaExpedicionFactura>
+    </tikR:IDFactura>
+    <tikR:Operacion>
+      <tik:TipoOperacion>Alta</tik:TipoOperacion>
+      <tik:Subsanacion>N</tik:Subsanacion>
+      <tik:RechazoPrevio>N</tik:RechazoPrevio>
+    </tikR:Operacion>
+    <tikR:RefExterna>EXTERNA</tikR:RefExterna>
+    <tikR:EstadoRegistro>AceptadoConErrores</tikR:EstadoRegistro>
+    <tikR:CodigoErrorRegistro>2000</tikR:CodigoErrorRegistro>
+    <tikR:DescripcionErrorRegistro><![CDATA[El cálculo de la huella suministrada es incorrecta.
+ Datos de entrada cálculo huella:
+IDEmisorFactura=89890001k&NumSerieFactura=12345678-G33&FechaExpedicionFactura=03-02-2025&TipoFactura=R3&CuotaTotal=41.4&ImporteTotal=241.4&Huella=&FechaHoraHusoGenRegistro=2025-02-03T14:18:00+02:00
+ Huella calculada: 98835BD0D7EAE7446D5802740E1AF37AB9A2E5B5C7B10C74AD83561AF71E805B]]></tikR:DescripcionErrorRegistro>
+  </tikR:RespuestaValidacion>
+</tikR:RespuestaValContenidoFactuSistemaFacturacion>

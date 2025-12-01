@@ -1,0 +1,133 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ValidacionNoVerifactu Response Schema",
+  "description": "JSON Schema for validating response payloads from the No VERI*FACTU validation service",
+  "version": "0.2",
+  "definitions": {
+    "IDFactura": {
+      "type": "object",
+      "description": "Identificador de la factura",
+      "required": ["IDEmisorFactura", "NumSerieFactura", "FechaExpedicionFactura"],
+      "properties": {
+        "IDEmisorFactura": {
+          "type": "string",
+          "description": "NIF del emisor de la factura",
+          "pattern": "^[A-Za-z0-9]{8,9}$"
+        },
+        "NumSerieFactura": {
+          "type": "string",
+          "description": "Número y serie de la factura",
+          "maxLength": 60
+        },
+        "FechaExpedicionFactura": {
+          "type": "string",
+          "description": "Fecha de expedición de la factura (DD-MM-YYYY)",
+          "pattern": "^[0-3][0-9]-[0-1][0-9]-[0-9]{4}$"
+        }
+      }
+    },
+    "Operacion": {
+      "type": "object",
+      "description": "Información de la operación",
+      "required": ["TipoOperacion"],
+      "properties": {
+        "TipoOperacion": {
+          "type": "string",
+          "enum": ["Alta", "Anulacion"],
+          "description": "Tipo de operación realizada"
+        },
+        "Subsanacion": {
+          "type": "string",
+          "enum": ["S", "N", "f"],
+          "description": "Indicador de subsanación"
+        },
+        "RechazoPrevio": {
+          "type": "string",
+          "enum": ["S", "N"],
+          "description": "Indicador de rechazo previo"
+        },
+        "SinRegistroPrevio": {
+          "type": "string",
+          "enum": ["S", "N"],
+          "description": "Indicador de sin registro previo (para anulaciones)"
+        }
+      }
+    },
+    "EstadoRegistro": {
+      "type": "string",
+      "enum": ["Correcto", "AceptadoConErrores", "Incorrecto"],
+      "description": "Estado del resultado de validación"
+    },
+    "RespuestaValidacion": {
+      "type": "object",
+      "description": "Respuesta de validación para un registro",
+      "required": ["IDFactura", "Operacion", "EstadoRegistro"],
+      "properties": {
+        "IDFactura": {
+          "$ref": "#/definitions/IDFactura"
+        },
+        "Operacion": {
+          "$ref": "#/definitions/Operacion"
+        },
+        "RefExterna": {
+          "type": "string",
+          "description": "Referencia externa del registro"
+        },
+        "EstadoRegistro": {
+          "$ref": "#/definitions/EstadoRegistro"
+        },
+        "CodigoErrorRegistro": {
+          "type": "string",
+          "description": "Código de error (si aplica)",
+          "pattern": "^[0-9]{4}$"
+        },
+        "DescripcionErrorRegistro": {
+          "type": "string",
+          "description": "Descripción del error (si aplica)"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "description": "Respuesta de validación del servicio No VERI*FACTU",
+  "properties": {
+    "RespuestaValContenidoFactuSistemaFacturacion": {
+      "type": "object",
+      "description": "Elemento raíz de la respuesta",
+      "properties": {
+        "RespuestaValidacion": {
+          "$ref": "#/definitions/RespuestaValidacion"
+        },
+        "DescripcionErrorFormatoXML": {
+          "type": "string",
+          "description": "Error de formato XML cuando el mensaje no cumple el esquema"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "RespuestaValContenidoFactuSistemaFacturacion": {
+        "RespuestaValidacion": {
+          "IDFactura": {
+            "IDEmisorFactura": "89890001k",
+            "NumSerieFactura": "12345678-G33",
+            "FechaExpedicionFactura": "03-02-2025"
+          },
+          "Operacion": {
+            "TipoOperacion": "Alta",
+            "Subsanacion": "N",
+            "RechazoPrevio": "N"
+          },
+          "RefExterna": "EXTERNA",
+          "EstadoRegistro": "Correcto"
+        }
+      }
+    },
+    {
+      "RespuestaValContenidoFactuSistemaFacturacion": {
+        "DescripcionErrorFormatoXML": "Código[4102]. El XML no cumple el esquema. Falta informar campo obligatorio.: IDVersion"
+      }
+    }
+  ]
+}

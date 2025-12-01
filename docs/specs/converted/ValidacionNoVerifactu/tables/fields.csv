@@ -1,0 +1,41 @@
+field_path,field_name,type,required,description,example
+IDVersion,ID Versión,string,true,Versión del esquema,1.0
+IDFactura/IDEmisorFactura,NIF Emisor Factura,string,true,NIF del emisor de la factura,89890001K
+IDFactura/NumSerieFactura,Número Serie Factura,string,true,Número y serie de la factura,12345678-G66
+IDFactura/FechaExpedicionFactura,Fecha Expedición,string,true,Fecha de expedición (DD-MM-YYYY),03-02-2025
+RefExterna,Referencia Externa,string,false,Referencia externa del registro,EXTERNA
+NombreRazonEmisor,Nombre/Razón Emisor,string,true,Nombre o razón social del emisor,certificado uno telematicas
+Subsanacion,Subsanación,enum,true,Indicador de subsanación (S/N),N
+RechazoPrevio,Rechazo Previo,enum,true,Indicador de rechazo previo (S/N),N
+TipoFactura,Tipo Factura,enum,true,Tipo de factura (F1/F2/F3/R1/R2/R3/R4/R5),F1
+TipoRectificativa,Tipo Rectificativa,enum,false,Tipo de factura rectificativa (I/S),I
+FacturasRectificadas/IDFacturaRectificada,Factura Rectificada,object,false,Identificación de factura rectificada,-
+FechaOperacion,Fecha Operación,string,false,Fecha de la operación (DD-MM-YYYY),03-02-2025
+DescripcionOperacion,Descripción Operación,string,true,Descripción de la operación,Venta de productos
+Destinatarios/IDDestinatario/NombreRazon,Nombre Destinatario,string,true,Nombre o razón social del destinatario,certificado dos telematicas
+Destinatarios/IDDestinatario/NIF,NIF Destinatario,string,false,NIF del destinatario,89890002E
+Destinatarios/IDDestinatario/IDOtro,ID Otro Destinatario,object,false,Identificación alternativa del destinatario,-
+Desglose/DetalleDesglose/ClaveRegimen,Clave Régimen,enum,true,Clave del régimen especial,01
+Desglose/DetalleDesglose/CalificacionOperacion,Calificación Operación,enum,true,Calificación de la operación,S1
+Desglose/DetalleDesglose/TipoImpositivo,Tipo Impositivo,number,false,Tipo impositivo aplicado,21
+Desglose/DetalleDesglose/BaseImponibleOimporteNoSujeto,Base Imponible,decimal,true,Base imponible o importe no sujeto,100
+Desglose/DetalleDesglose/CuotaRepercutida,Cuota Repercutida,decimal,false,Cuota de IVA repercutida,21
+CuotaTotal,Cuota Total,decimal,true,Cuota total de la factura,21
+ImporteTotal,Importe Total,decimal,true,Importe total de la factura,121
+Encadenamiento/PrimerRegistro,Primer Registro,enum,false,Indicador de primer registro (S/N),S
+Encadenamiento/RegistroAnterior/IDEmisorFactura,NIF Emisor Anterior,string,false,NIF del emisor del registro anterior,89890001K
+Encadenamiento/RegistroAnterior/NumSerieFactura,Número Serie Anterior,string,false,Número y serie de la factura anterior,12345677-G33
+Encadenamiento/RegistroAnterior/FechaExpedicionFactura,Fecha Expedición Anterior,string,false,Fecha de expedición anterior,15-04-2024
+Encadenamiento/RegistroAnterior/Huella,Huella Anterior,string,false,Hash del registro anterior,C9AF4AF1EF5EBBA700350DE3EEF12C2D355C56AC56F13DB2A25E0031BD2B7ED5
+SistemaInformatico/NombreRazon,Nombre Sistema,string,true,Nombre del fabricante del sistema,CERTIFICADO UNO TELEMATICAS
+SistemaInformatico/NIF,NIF Sistema,string,true,NIF del fabricante del sistema,89890001K
+SistemaInformatico/NombreSistemaInformatico,Nombre Software,string,true,Nombre del sistema informático,NombreSistemaInformatico
+SistemaInformatico/IdSistemaInformatico,ID Sistema,string,true,Identificador del sistema,77
+SistemaInformatico/Version,Versión Sistema,string,true,Versión del sistema,1.0.03
+SistemaInformatico/NumeroInstalacion,Número Instalación,string,true,Número de instalación,383
+SistemaInformatico/TipoUsoPosibleSoloVerifactu,Solo Verifactu,enum,true,Uso solo para Verifactu (S/N),S
+SistemaInformatico/TipoUsoPosibleMultiOT,Multi OT,enum,true,Uso multi operador tributario (S/N),N
+SistemaInformatico/IndicadorMultiplesOT,Múltiples OT,enum,true,Indicador de múltiples OT (S/N),N
+FechaHoraHusoGenRegistro,Fecha/Hora Generación,datetime,true,Fecha y hora de generación del registro,2025-02-03T14:30:00+01:00
+TipoHuella,Tipo Huella,enum,true,Tipo de algoritmo de hash (01=SHA-256),01
+Huella,Huella,string,true,Hash SHA-256 del registro,FF954378B64ED331A9B2366AD317D86E9DEC1716B12DD0ACCB172A6DC4C105AA

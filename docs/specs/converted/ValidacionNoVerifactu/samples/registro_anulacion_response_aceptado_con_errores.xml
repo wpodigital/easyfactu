@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tikR:RespuestaValContenidoFactuSistemaFacturacion
+xmlns:tikR="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/RespuestaValRegistNoVeriFactu.xsd"
+xmlns:tik="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
+  <tikR:RespuestaValidacion>
+    <tikR:IDFactura>
+      <tik:IDEmisorFactura>89890002E</tik:IDEmisorFactura>
+      <tik:NumSerieFactura>zrvgag</tik:NumSerieFactura>
+      <tik:FechaExpedicionFactura>10-10-2020</tik:FechaExpedicionFactura>
+    </tikR:IDFactura>
+    <tikR:Operacion>
+      <tik:TipoOperacion>Anulacion</tik:TipoOperacion>
+      <tik:RechazoPrevio>S</tik:RechazoPrevio>
+      <tik:SinRegistroPrevio>N</tik:SinRegistroPrevio>
+    </tikR:Operacion>
+    <tikR:RefExterna>EXTERNA</tikR:RefExterna>
+    <tikR:EstadoRegistro>AceptadoConErrores</tikR:EstadoRegistro>
+    <tikR:CodigoErrorRegistro>2000</tikR:CodigoErrorRegistro>
+    <tikR:DescripcionErrorRegistro>El cálculo de la huella suministrada es incorrecta.
+ Datos de entrada cálculo huella:
+IDEmisorFacturaAnulada=89890002E&amp;NumSerieFacturaAnulada=zrvgag&amp;FechaExpedicionFacturaAnulada=10-10-2020&amp;Huella=HuellaRegistroAnterior&amp;FechaHoraHusoGenRegistro=2024-02-13T19:20:30+01:00
+ Huella calculada: B74324840EA646B9C2F2D08BBF300069CF2C3C4329EFB6C4D4E5930B9C617F09</tikR:DescripcionErrorRegistro>
+  </tikR:RespuestaValidacion>
+</tikR:RespuestaValContenidoFactuSistemaFacturacion>

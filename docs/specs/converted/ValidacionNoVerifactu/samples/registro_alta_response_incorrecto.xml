@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tikR:RespuestaValContenidoFactuSistemaFacturacion
+xmlns:tikR="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/RespuestaValRegistNoVeriFactu.xsd"
+xmlns:tik="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
+  <tikR:RespuestaValidacion>
+    <tikR:IDFactura>
+      <tik:IDEmisorFactura>89890001Z</tik:IDEmisorFactura>
+      <tik:NumSerieFactura>12345678-G33</tik:NumSerieFactura>
+      <tik:FechaExpedicionFactura>03-02-2025</tik:FechaExpedicionFactura>
+    </tikR:IDFactura>
+    <tikR:Operacion>
+      <tik:TipoOperacion>Alta</tik:TipoOperacion>
+      <tik:Subsanacion>f</tik:Subsanacion>
+      <tik:RechazoPrevio>N</tik:RechazoPrevio>
+    </tikR:Operacion>
+    <tikR:RefExterna>EXTERNA</tikR:RefExterna>
+    <tikR:EstadoRegistro>Incorrecto</tikR:EstadoRegistro>
+    <tikR:CodigoErrorRegistro>1123</tikR:CodigoErrorRegistro>
+    <tikR:DescripcionErrorRegistro>Error en el bloque de IdEmisorFactura.. El formato del NIF es incorrecto.. NIF:89890001Z.</tikR:DescripcionErrorRegistro>
+  </tikR:RespuestaValidacion>
+</tikR:RespuestaValContenidoFactuSistemaFacturacion>
