@@ -26,9 +26,10 @@ EasyFactu es un sistema completo para la gestión y registro de facturas ante la
 - ✅ Tipos TypeScript completos basados en XSD de AEAT
 - ✅ Generación de XML para RegistroAlta y RegistroAnulacion
 - ✅ Cálculo de hash (Huella) para encadenamiento según especificaciones AEAT
-- ✅ Validación XSD de mensajes de entrada y salida
+- ✅ Validación XML de mensajes de entrada y salida
 - ✅ Parseo de respuestas de AEAT
 - ✅ Formateo automático de números (eliminación de ceros)
+- ✅ **Seguridad mejorada**: Usa `fast-xml-parser` sin vulnerabilidades conocidas
 
 ### API Backend
 
@@ -315,3 +316,33 @@ Para preguntas y soporte, crear un issue en el repositorio.
 - [AEAT - Agencia Tributaria](https://www.agenciatributaria.es/)
 - [VeriFactu - Sistema de verificación de facturas](https://sede.agenciatributaria.gob.es/)
 - Documentación técnica en el directorio `docs/`
+
+## Seguridad
+
+Este proyecto toma la seguridad en serio. Hemos implementado las siguientes medidas:
+
+- ✅ **Dependencias seguras**: Usa `fast-xml-parser` sin vulnerabilidades conocidas
+- ✅ **Sin dependencias nativas**: Reduce la superficie de ataque
+- ✅ **Validación de entrada**: Validación XML de sintaxis
+- ✅ **Hash seguro**: SHA-256 para encadenamiento de facturas
+- ⚠️ **XSD Validation**: Actualmente implementa validación básica de sintaxis XML. Para producción, considere implementar validación XSD completa usando herramientas externas
+
+### Reporte de Vulnerabilidades
+
+Si descubre una vulnerabilidad de seguridad, por favor:
+1. **NO** abra un issue público
+2. Envíe un reporte privado a través de GitHub Security Advisories
+3. O contacte directamente a los mantenedores
+
+Para más detalles, consulte [SECURITY.md](SECURITY.md).
+
+### Auditorías de Seguridad
+
+```bash
+# Verificar dependencias
+npm audit
+
+# Actualizar dependencias de seguridad
+npm audit fix
+```
+

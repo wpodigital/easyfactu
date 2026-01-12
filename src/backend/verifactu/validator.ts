@@ -1,9 +1,12 @@
 /**
  * Validator for VeriFactu
- * Validates XML against XSD schema and parses responses
+ * Validates XML and parses responses
+ * 
+ * Note: XSD validation has been simplified due to security vulnerabilities in libxmljs2.
+ * For production use, consider implementing server-side XSD validation or using a secure alternative.
  */
 
-import * as libxmljs from 'libxmljs2';
+import { XMLParser, XMLValidator } from 'fast-xml-parser';
 import * as fs from 'fs';
 import * as path from 'path';
 import {
@@ -12,59 +15,62 @@ import {
   EstadoRegistroType,
 } from './types';
 
-// Load XSD schemas
+// XSD schemas are available for reference but not actively validated due to security concerns
 const xsdBasePath = path.join(__dirname, '..', '..', '..', 'docs');
-let schemaInput: libxmljs.Document | null = null;
-let schemaOutput: libxmljs.Document | null = null;
+const xsdInputPath = path.join(xsdBasePath, 'SuministroInformacion.xsd');
+const xsdOutputPath = path.join(xsdBasePath, 'RespuestaValRegistNoVeriFactu.xsd');
 
-try {
-  const xsdInputPath = path.join(xsdBasePath, 'SuministroInformacion.xsd');
-  const xsdOutputPath = path.join(xsdBasePath, 'RespuestaValRegistNoVeriFactu.xsd');
-  
-  if (fs.existsSync(xsdInputPath)) {
-    const xsdContent = fs.readFileSync(xsdInputPath, 'utf8');
-    schemaInput = libxmljs.parseXml(xsdContent);
-  }
-  
-  if (fs.existsSync(xsdOutputPath)) {
-    const xsdContent = fs.readFileSync(xsdOutputPath, 'utf8');
-    schemaOutput = libxmljs.parseXml(xsdContent);
-  }
-} catch (err) {
-  console.warn('VeriFactu XSD schemas not loaded:', (err as Error).message);
+// Check if XSD files exist
+const hasInputXsd = fs.existsSync(xsdInputPath);
+const hasOutputXsd = fs.existsSync(xsdOutputPath);
+
+if (!hasInputXsd || !hasOutputXsd) {
+  console.warn('VeriFactu XSD schemas not found. XML structure validation will be basic.');
 }
 
 /**
- * Validate XML against input schema (SuministroInformacion.xsd)
+ * Validate XML structure (basic validation without XSD)
+ * For production use, implement proper XSD validation with a secure library
  */
 export function validateInputXml(xmlString: string): { valid: boolean; errors: string[] } {
-  if (!schemaInput) {
-    return { valid: false, errors: ['Input XSD schema not loaded'] };
-  }
-  
   try {
-    const xmlDoc = libxmljs.parseXml(xmlString);
-    const valid = xmlDoc.validate(schemaInput);
-    const errors = (xmlDoc.validationErrors || []).map(e => e.message?.trim() || e.toString());
-    return { valid: !!valid, errors };
+    // Basic XML syntax validation
+    const validationResult = XMLValidator.validate(xmlString, {
+      allowBooleanAttributes: true,
+    });
+    
+    if (validationResult === true) {
+      return { valid: true, errors: [] };
+    } else {
+      return { 
+        valid: false, 
+        errors: [validationResult.err?.msg || 'XML validation error']
+      };
+    }
   } catch (err) {
     return { valid: false, errors: [(err as Error).message] };
   }
 }
 
 /**
- * Validate XML against output schema (RespuestaValRegistNoVeriFactu.xsd)
+ * Validate XML structure (basic validation without XSD)
+ * For production use, implement proper XSD validation with a secure library
  */
 export function validateOutputXml(xmlString: string): { valid: boolean; errors: string[] } {
-  if (!schemaOutput) {
-    return { valid: false, errors: ['Output XSD schema not loaded'] };
-  }
-  
   try {
-    const xmlDoc = libxmljs.parseXml(xmlString);
-    const valid = xmlDoc.validate(schemaOutput);
-    const errors = (xmlDoc.validationErrors || []).map(e => e.message?.trim() || e.toString());
-    return { valid: !!valid, errors };
+    // Basic XML syntax validation
+    const validationResult = XMLValidator.validate(xmlString, {
+      allowBooleanAttributes: true,
+    });
+    
+    if (validationResult === true) {
+      return { valid: true, errors: [] };
+    } else {
+      return { 
+        valid: false, 
+        errors: [validationResult.err?.msg || 'XML validation error']
+      };
+    }
   } catch (err) {
     return { valid: false, errors: [(err as Error).message] };
   }
@@ -75,55 +81,57 @@ export function validateOutputXml(xmlString: string): { valid: boolean; errors: 
  */
 export function parseRespuestaXml(xmlString: string): RespuestaValContenidoFactuSistemaFacturacionType {
   try {
-    const xmlDoc = libxmljs.parseXml(xmlString);
+    const parser = new XMLParser({
+      ignoreAttributes: false,
+      attributeNamePrefix: '@_',
+      textNodeName: '#text',
+      parseTagValue: true,
+      parseAttributeValue: true,
+      trimValues: true,
+    });
+    
+    const result = parser.parse(xmlString);
+    
+    // Navigate the parsed structure
+    const root = result['RespuestaValContenidoFactuSistemaFacturacion'] || 
+                 result['sfR:RespuestaValContenidoFactuSistemaFacturacion'] ||
+                 result;
     
     // Check for XML format error
-    const errorNode = xmlDoc.get('//*[local-name()="DescripcionErrorFormatoXML"]');
-    if (errorNode) {
+    if (root.DescripcionErrorFormatoXML) {
       return {
-        DescripcionErrorFormatoXML: errorNode.text().trim(),
+        DescripcionErrorFormatoXML: root.DescripcionErrorFormatoXML,
       };
     }
     
     // Parse RespuestaValidacion
-    const respuestaNode = xmlDoc.get('//*[local-name()="RespuestaValidacion"]');
+    const respuestaNode = root.RespuestaValidacion;
     if (!respuestaNode) {
       throw new Error('Invalid response format: RespuestaValidacion not found');
     }
     
-    const getText = (node: any, name: string): string => {
-      const el = node.get(`.//*[local-name()="${name}"]`);
-      return el ? el.text().trim() : '';
-    };
-    
-    const idFacturaNode = respuestaNode.get('.//*[local-name()="IDFactura"]');
-    if (!idFacturaNode) {
-      throw new Error('Invalid response format: IDFactura not found');
-    }
+    const idFactura = respuestaNode.IDFactura || {};
     
     const respuesta: RespuestaRegType = {
       IDFactura: {
-        IDEmisorFactura: getText(idFacturaNode, 'IDEmisorFactura'),
-        NumSerieFactura: getText(idFacturaNode, 'NumSerieFactura'),
-        FechaExpedicionFactura: getText(idFacturaNode, 'FechaExpedicionFactura'),
+        IDEmisorFactura: idFactura.IDEmisorFactura || '',
+        NumSerieFactura: idFactura.NumSerieFactura || '',
+        FechaExpedicionFactura: idFactura.FechaExpedicionFactura || '',
       },
-      Operacion: getText(respuestaNode, 'Operacion') as any,
-      EstadoRegistro: getText(respuestaNode, 'EstadoRegistro') as EstadoRegistroType,
+      Operacion: respuestaNode.Operacion || '',
+      EstadoRegistro: respuestaNode.EstadoRegistro as EstadoRegistroType,
     };
     
-    const refExterna = getText(respuestaNode, 'RefExterna');
-    if (refExterna) {
-      respuesta.RefExterna = refExterna;
+    if (respuestaNode.RefExterna) {
+      respuesta.RefExterna = respuestaNode.RefExterna;
     }
     
-    const codigoError = getText(respuestaNode, 'CodigoErrorRegistro');
-    if (codigoError) {
-      respuesta.CodigoErrorRegistro = codigoError;
+    if (respuestaNode.CodigoErrorRegistro) {
+      respuesta.CodigoErrorRegistro = respuestaNode.CodigoErrorRegistro;
     }
     
-    const descripcionError = getText(respuestaNode, 'DescripcionErrorRegistro');
-    if (descripcionError) {
-      respuesta.DescripcionErrorRegistro = descripcionError;
+    if (respuestaNode.DescripcionErrorRegistro) {
+      respuesta.DescripcionErrorRegistro = respuestaNode.DescripcionErrorRegistro;
     }
     
     return {
