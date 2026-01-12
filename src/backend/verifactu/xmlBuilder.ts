@@ -14,17 +14,17 @@ import {
   DetalleNoSujetaType,
   OperacionType,
 } from './types';
+import { formatNumberForVeriFactu } from './utils';
 
 const NAMESPACE_SF = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd';
 
 /**
  * Format a number for XML, removing trailing zeros after decimal point
+ * Returns undefined if value is undefined
  */
 function formatNumber(value: number | undefined): string | undefined {
-  if (value === undefined || value === null) return undefined;
-  // Format with 2 decimal places, then remove trailing zeros
-  const formatted = value.toFixed(2);
-  return formatted.replace(/\.?0+$/, '');
+  if (value === undefined) return undefined;
+  return formatNumberForVeriFactu(value);
 }
 
 /**

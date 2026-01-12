@@ -64,7 +64,20 @@ describe('VeriFactu Hash Calculator', () => {
 
       // Expected format: IDVersion + IDEmisorFactura + NumSerieFactura + FechaExpedicionFactura + 
       //                  TipoFactura + CuotaTotal + ImporteTotal + HuellaAnterior + FechaHoraHusoGenRegistro
-      expect(canonical).toBe('1.0B12345678FAC-2024-0012024-01-15F12112120242024-01-15T10:30:00+01:00');
+      // Breaking down the expected value:
+      // - IDVersion: "1.0"
+      // - IDEmisorFactura: "B12345678"
+      // - NumSerieFactura: "FAC-2024-001"
+      // - FechaExpedicionFactura: "2024-01-15"
+      // - TipoFactura: "F1"
+      // - CuotaTotal: "21" (21.00 with trailing zeros removed)
+      // - ImporteTotal: "121" (121.00 with trailing zeros removed)
+      // - HuellaAnterior: "" (empty for first registration)
+      // - FechaHoraHusoGenRegistro: "2024-01-15T10:30:00+01:00"
+      const expected = '1.0' + 'B12345678' + 'FAC-2024-001' + '2024-01-15' + 
+                       'F1' + '21' + '121' + '' + '2024-01-15T10:30:00+01:00';
+      
+      expect(canonical).toBe(expected);
       
       // Numbers should have trailing zeros removed
       expect(canonical).toContain('21121'); // 21 + 121, not 21.00 + 121.00

@@ -9,16 +9,7 @@ import {
   RegistroFacturacionAltaType,
   RegistroFacturacionAnulacionType,
 } from './types';
-
-/**
- * Format a number according to VeriFactu spec - remove trailing zeros
- */
-function formatNumberForHash(value: number | undefined): string {
-  if (value === undefined || value === null) return '';
-  // Format with 2 decimal places, then remove trailing zeros and decimal point if not needed
-  const formatted = value.toFixed(2);
-  return formatted.replace(/\.?0+$/, '');
-}
+import { formatNumberForVeriFactu } from './utils';
 
 /**
  * Build canonical string for RegistroAlta (invoice registration)
@@ -39,10 +30,10 @@ export function buildCanonicalStringAlta(registro: RegistroFacturacionAltaType):
   parts.push(registro.TipoFactura || '');
   
   // CuotaTotal (formatted without trailing zeros)
-  parts.push(formatNumberForHash(registro.CuotaTotal));
+  parts.push(formatNumberForVeriFactu(registro.CuotaTotal));
   
   // ImporteTotal (formatted without trailing zeros)
-  parts.push(formatNumberForHash(registro.ImporteTotal));
+  parts.push(formatNumberForVeriFactu(registro.ImporteTotal));
   
   // Huella anterior (if not primer registro)
   if (registro.Encadenamiento.RegistroAnterior) {

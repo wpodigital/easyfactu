@@ -12,3 +12,4 @@ export * from './types';
 export * from './xmlBuilder';
 export * from './hashCalculator';
 export * from './validator';
+export * from './utils';
