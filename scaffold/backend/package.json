@@ -6,7 +6,13 @@
     "dev": "ts-node-dev --respawn src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "jest"
+    "test": "jest",
+    "db:setup": "./scripts/db-setup.sh",
+    "db:setup:seed": "./scripts/db-setup.sh --seed",
+    "db:reset": "./scripts/db-reset.sh",
+    "test:api": "./scripts/test-api.sh",
+    "lint": "echo 'No linter configured yet'",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "dotenv": "^17.3.1",

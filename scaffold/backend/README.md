@@ -2,6 +2,52 @@
 
 Backend API for managing Spanish Tax Authority (AEAT) invoice registrations using the VeriFactu system.
 
+## 🚀 Quick Start
+
+### 1. Setup
+
+```bash
+# Install dependencies
+npm install
+
+# Copy environment file
+cp .env.example .env
+
+# Edit .env with your PostgreSQL credentials
+nano .env
+
+# Setup database with test data
+npm run db:setup:seed
+```
+
+### 2. Run
+
+```bash
+# Development mode (with auto-reload)
+npm run dev
+
+# Or build and run production
+npm run build
+npm start
+```
+
+### 3. Test
+
+```bash
+# Health check
+curl http://localhost:3000/health
+
+# Run API tests
+npm run test:api
+
+# Or use the Postman collection
+# Import: postman_collection.json
+```
+
+📖 **See**: [TESTING_GUIDE.md](../../TESTING_GUIDE.md) for detailed testing instructions.
+
+---
+
 ## Overview
 
 This API provides endpoints to:
