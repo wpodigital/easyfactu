@@ -20,7 +20,9 @@ Ahora tienes:
 
 ## 🚀 Cómo Empezar a Probar (3 pasos simples)
 
-### Paso 1: Configurar Base de Datos
+### 🐧 Para Linux/Mac
+
+#### Paso 1: Configurar Base de Datos
 
 ```bash
 cd scaffold/backend
@@ -42,11 +44,52 @@ npm run db:setup:seed
 
 ---
 
-### Paso 2: Iniciar el Servidor
+#### Paso 2: Iniciar el Servidor
 
 ```bash
 npm run dev
 ```
+
+---
+
+### 🪟 Para Windows
+
+#### Paso 1: Configurar Base de Datos
+
+```powershell
+cd scaffold\backend
+copy .env.example .env
+notepad .env  # Editar con tu password de PostgreSQL
+```
+
+En el archivo `.env`, cambia:
+```
+DB_PASSWORD=tu_password_aqui
+```
+
+Luego ejecuta:
+```powershell
+.\scripts\db-setup.ps1 -Seed
+```
+
+✅ Esto crea la base de datos y añade 3 facturas de ejemplo.
+
+**Si obtienes error de ejecución**, primero ejecuta:
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+---
+
+#### Paso 2: Iniciar el Servidor
+
+```powershell
+npm run dev
+```
+
+---
+
+### 📝 Ambos Sistemas (Cross-Platform)
 
 ✅ El servidor arranca en http://localhost:3000
 
@@ -58,6 +101,7 @@ npm run dev
 
 **Abre una NUEVA terminal** y ejecuta:
 
+#### En Linux/Mac:
 ```bash
 # Opción A: Test automático de todos los endpoints
 cd scaffold/backend
@@ -70,15 +114,31 @@ curl http://localhost:3000/health
 curl http://localhost:3000/api/v1/invoices
 ```
 
+#### En Windows:
+```powershell
+# Opción A: Test automático de todos los endpoints
+cd scaffold\backend
+.\scripts\test-api.ps1
+
+# Opción B: Health check manual
+Invoke-WebRequest http://localhost:3000/health
+
+# Opción C: Ver las 3 facturas de ejemplo
+Invoke-WebRequest http://localhost:3000/api/v1/invoices | Select-Object -Expand Content
+```
+
 ---
 
 ## 📁 Guías Disponibles
 
 Si necesitas ayuda:
 
-1. **QUICK_START.md** → Guía de inicio en 5 minutos
-2. **TESTING_GUIDE.md** → Guía completa de testing (español + inglés)
-3. **ACTUALIZACION_FASE2.5.md** → Detalles de esta actualización
+1. **QUICK_START.md** → Guía de inicio en 5 minutos (Linux/Mac)
+2. **WINDOWS_SETUP.md** → Guía completa para Windows ⭐ NUEVO
+3. **TESTING_GUIDE.md** → Guía completa de testing (español + inglés)
+4. **ACTUALIZACION_FASE2.5.md** → Detalles de esta actualización
+
+**Para Windows**: Lee primero **WINDOWS_SETUP.md** - guía específica y completa en español.
 
 ---
 
