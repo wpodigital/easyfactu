@@ -6,6 +6,27 @@ Esta guía te ayudará a configurar y probar el sistema EasyFactu en Windows pas
 
 ---
 
+## ⚠️ IMPORTANTE: Directorio Correcto
+
+**ANTES DE HACER NADA**, asegúrate de estar en el directorio correcto del proyecto.
+
+```powershell
+# ❌ NUNCA ejecutes npm desde aquí:
+C:\WINDOWS\system32>
+
+# ✅ Debes estar aquí (ajusta la ruta según donde descargaste el proyecto):
+C:\Users\TU_USUARIO\Desktop\easyfactu\scaffold\backend>
+```
+
+**Si ves un error como:**
+```
+npm error path C:\WINDOWS\system32\package.json
+```
+
+**Significa que estás en el directorio equivocado.** Consulta **SOLUCION_RAPIDA.md** para la solución inmediata.
+
+---
+
 ## 📋 Prerequisitos
 
 ### 1. PostgreSQL
