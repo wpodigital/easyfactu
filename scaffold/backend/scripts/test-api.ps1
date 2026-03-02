@@ -17,13 +17,13 @@ Write-Info "================================================"
 Write-Host ""
 
 # Check if server is running
-Write-Info "🔍 Verificando si el servidor está ejecutándose..."
+Write-Info "[INFO] Verificando si el servidor está ejecutándose..."
 try {
     $response = Invoke-WebRequest -Uri "$API_URL/health" -Method GET -ErrorAction Stop
-    Write-Success "✓ Servidor ejecutándose"
+    Write-Success "[OK] Servidor ejecutándose"
     Write-Host ""
 } catch {
-    Write-Error "❌ Error: El servidor no está ejecutándose"
+    Write-Error "[ERROR] Error: El servidor no está ejecutándose"
     Write-Warning "Por favor inicia el servidor primero:"
     Write-Host "  npm run dev"
     Write-Host ""
@@ -60,7 +60,7 @@ function Test-Endpoint {
         $response = Invoke-WebRequest @params
         
         if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300) {
-            Write-Success "  ✓ Status: $($response.StatusCode)"
+            Write-Success "  [OK] Status: $($response.StatusCode)"
             $script:testsPassed++
             
             # Show response preview for GET requests
@@ -72,11 +72,11 @@ function Test-Endpoint {
                 }
             }
         } else {
-            Write-Warning "  ⚠️  Status: $($response.StatusCode)"
+            Write-Warning "  [WARNING]  Status: $($response.StatusCode)"
             $script:testsFailed++
         }
     } catch {
-        Write-Error "  ❌ Error: $($_.Exception.Message)"
+        Write-Error "  [ERROR] Error: $($_.Exception.Message)"
         $script:testsFailed++
     }
     
@@ -131,14 +131,14 @@ Write-Info "Testing: Get Invoice by ID"
 Write-Host "  GET /api/v1/invoices/TEST-001" -ForegroundColor DarkGray
 try {
     $response = Invoke-WebRequest -Uri "$API_URL/api/v1/invoices/TEST-001" -Method GET -ErrorAction Stop
-    Write-Success "  ✓ Status: $($response.StatusCode)"
+    Write-Success "  [OK] Status: $($response.StatusCode)"
     $testsPassed++
 } catch {
     if ($_.Exception.Response.StatusCode.Value__ -eq 404) {
-        Write-Warning "  ⚠️  Invoice TEST-001 not found (expected if test data not loaded)"
+        Write-Warning "  [WARNING]  Invoice TEST-001 not found (expected if test data not loaded)"
         $testsPassed++
     } else {
-        Write-Error "  ❌ Error: $($_.Exception.Message)"
+        Write-Error "  [ERROR] Error: $($_.Exception.Message)"
         $testsFailed++
     }
 }
@@ -149,14 +149,14 @@ Write-Info "Testing: Get Invoice Status"
 Write-Host "  GET /api/v1/invoices/TEST-001/status" -ForegroundColor DarkGray
 try {
     $response = Invoke-WebRequest -Uri "$API_URL/api/v1/invoices/TEST-001/status" -Method GET -ErrorAction Stop
-    Write-Success "  ✓ Status: $($response.StatusCode)"
+    Write-Success "  [OK] Status: $($response.StatusCode)"
     $testsPassed++
 } catch {
     if ($_.Exception.Response.StatusCode.Value__ -eq 404) {
-        Write-Warning "  ⚠️  Invoice TEST-001 not found (expected if test data not loaded)"
+        Write-Warning "  [WARNING]  Invoice TEST-001 not found (expected if test data not loaded)"
         $testsPassed++
     } else {
-        Write-Error "  ❌ Error: $($_.Exception.Message)"
+        Write-Error "  [ERROR] Error: $($_.Exception.Message)"
         $testsFailed++
     }
 }
@@ -167,14 +167,14 @@ Write-Info "Testing: Get Invoice XML"
 Write-Host "  GET /api/v1/invoices/TEST-001/xml" -ForegroundColor DarkGray
 try {
     $response = Invoke-WebRequest -Uri "$API_URL/api/v1/invoices/TEST-001/xml" -Method GET -ErrorAction Stop
-    Write-Success "  ✓ Status: $($response.StatusCode)"
+    Write-Success "  [OK] Status: $($response.StatusCode)"
     $testsPassed++
 } catch {
     if ($_.Exception.Response.StatusCode.Value__ -eq 404) {
-        Write-Warning "  ⚠️  Invoice TEST-001 not found (expected if test data not loaded)"
+        Write-Warning "  [WARNING]  Invoice TEST-001 not found (expected if test data not loaded)"
         $testsPassed++
     } else {
-        Write-Error "  ❌ Error: $($_.Exception.Message)"
+        Write-Error "  [ERROR] Error: $($_.Exception.Message)"
         $testsFailed++
     }
 }
@@ -189,14 +189,14 @@ Write-Info "Testing: Validate Invoice"
 Write-Host "  POST /api/v1/invoices/TEST-001/validate" -ForegroundColor DarkGray
 try {
     $response = Invoke-WebRequest -Uri "$API_URL/api/v1/invoices/TEST-001/validate" -Method POST -Body $validationData -ContentType "application/json" -ErrorAction Stop
-    Write-Success "  ✓ Status: $($response.StatusCode)"
+    Write-Success "  [OK] Status: $($response.StatusCode)"
     $testsPassed++
 } catch {
     if ($_.Exception.Response.StatusCode.Value__ -eq 404) {
-        Write-Warning "  ⚠️  Invoice TEST-001 not found (expected if test data not loaded)"
+        Write-Warning "  [WARNING]  Invoice TEST-001 not found (expected if test data not loaded)"
         $testsPassed++
     } else {
-        Write-Error "  ❌ Error: $($_.Exception.Message)"
+        Write-Error "  [ERROR] Error: $($_.Exception.Message)"
         $testsFailed++
     }
 }
@@ -207,11 +207,11 @@ Write-Info "================================================"
 Write-Info "  Test Summary"
 Write-Info "================================================"
 Write-Host ""
-Write-Success "✓ Tests Passed: $testsPassed"
+Write-Success "[OK] Tests Passed: $testsPassed"
 if ($testsFailed -gt 0) {
-    Write-Error "❌ Tests Failed: $testsFailed"
+    Write-Error "[ERROR] Tests Failed: $testsFailed"
 } else {
-    Write-Success "❌ Tests Failed: $testsFailed"
+    Write-Success "[ERROR] Tests Failed: $testsFailed"
 }
 Write-Host ""
 
@@ -223,7 +223,7 @@ Write-Host ""
 if ($testsFailed -eq 0) {
     Write-Success "🎉 All tests passed!"
 } else {
-    Write-Warning "⚠️  Some tests failed. Check the output above for details."
+    Write-Warning "[WARNING]  Some tests failed. Check the output above for details."
 }
 Write-Host ""
 

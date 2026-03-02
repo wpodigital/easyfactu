@@ -29,15 +29,15 @@ function Check-Item {
     try {
         $result = & $Test
         if ($result) {
-            Write-Success "  ✓ OK"
+            Write-Success "  [OK] OK"
             $script:checksPassed++
             return $true
         } else {
             if ($Warning) {
-                Write-Warning "  ⚠️  Warning"
+                Write-Warning "  [WARNING]  Warning"
                 $script:checksWarning++
             } else {
-                Write-Error "  ❌ Failed"
+                Write-Error "  [ERROR] Failed"
                 $script:checksFailed++
             }
             if ($ErrorMessage) {
@@ -47,10 +47,10 @@ function Check-Item {
         }
     } catch {
         if ($Warning) {
-            Write-Warning "  ⚠️  Warning: $($_.Exception.Message)"
+            Write-Warning "  [WARNING]  Warning: $($_.Exception.Message)"
             $script:checksWarning++
         } else {
-            Write-Error "  ❌ Error: $($_.Exception.Message)"
+            Write-Error "  [ERROR] Error: $($_.Exception.Message)"
             $script:checksFailed++
         }
         if ($ErrorMessage) {
@@ -302,10 +302,10 @@ Write-Host ""
 if ($checksFailed -eq 0 -and $checksWarning -eq 0) {
     Write-Success "🎉 ¡Sistema completamente verificado! Todo está en orden."
 } elseif ($checksFailed -eq 0) {
-    Write-Success "✓ Sistema verificado con algunas advertencias"
+    Write-Success "[OK] Sistema verificado con algunas advertencias"
     Write-Warning "Revisa las advertencias arriba para optimizar tu configuración"
 } else {
-    Write-Error "❌ Algunos checks fallaron"
+    Write-Error "[ERROR] Algunos checks fallaron"
     Write-Warning "Por favor resuelve los errores arriba antes de continuar"
 }
 

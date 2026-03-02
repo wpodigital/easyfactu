@@ -11,17 +11,17 @@ function Write-Warning { Write-Host $args -ForegroundColor Yellow }
 function Write-Info { Write-Host $args -ForegroundColor Cyan }
 
 Write-Warning "================================================"
-Write-Warning "  ⚠️  ADVERTENCIA: Database Reset"
+Write-Warning "  [WARNING] ADVERTENCIA: Database Reset"
 Write-Warning "================================================"
 Write-Host ""
-Write-Warning "Este script eliminará TODOS los datos de la base de datos"
-Write-Warning "y la recreará desde cero."
+Write-Warning "Este script eliminara TODOS los datos de la base de datos"
+Write-Warning "y la recreara desde cero."
 Write-Host ""
 
 # Confirmation
-$confirmation = Read-Host "¿Estás seguro que deseas continuar? (escribe 'SI' para confirmar)"
+$confirmation = Read-Host "Estas seguro que deseas continuar? (escribe 'SI' para confirmar)"
 if ($confirmation -ne "SI") {
-    Write-Info "Operación cancelada"
+    Write-Info "Operacion cancelada"
     exit 0
 }
 
@@ -31,13 +31,13 @@ Write-Host ""
 
 # Check if .env file exists
 if (-not (Test-Path ".env")) {
-    Write-Error "❌ Error: Archivo .env no encontrado"
+    Write-Error "[ERROR] Archivo .env no encontrado"
     Write-Warning "Por favor copia .env.example a .env y configura tus credenciales"
     exit 1
 }
 
 # Load environment variables
-Write-Info "📄 Cargando configuración..."
+Write-Info "[INFO] Cargando configuracion..."
 Get-Content .env | ForEach-Object {
     if ($_ -match '^\s*([^#][^=]*)\s*=\s*(.*)$') {
         $name = $matches[1].Trim()
@@ -53,18 +53,18 @@ $DB_USER = $env:DB_USER
 $DB_PASSWORD = $env:DB_PASSWORD
 
 if (-not $DB_HOST -or -not $DB_PORT -or -not $DB_NAME -or -not $DB_USER) {
-    Write-Error "❌ Error: Variables de entorno no configuradas"
+    Write-Error "[ERROR] Variables de entorno no configuradas"
     exit 1
 }
 
-Write-Success "✓ Configuración cargada"
+Write-Success "[OK] Configuracion cargada"
 Write-Host ""
 
 # Set password
 $env:PGPASSWORD = $DB_PASSWORD
 
 # Terminate connections
-Write-Info "🔌 Cerrando conexiones existentes..."
+Write-Info "[INFO] Cerrando conexiones existentes..."
 $terminateSQL = @"
 SELECT pg_terminate_backend(pg_stat_activity.pid)
 FROM pg_stat_activity
@@ -73,36 +73,36 @@ WHERE pg_stat_activity.datname = '$DB_NAME'
 "@
 
 & psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d postgres -c $terminateSQL 2>&1 | Out-Null
-Write-Success "✓ Conexiones cerradas"
+Write-Success "[OK] Conexiones cerradas"
 Write-Host ""
 
 # Drop database
-Write-Info "🗑️  Eliminando base de datos '$DB_NAME'..."
+Write-Info "[INFO] Eliminando base de datos '$DB_NAME'..."
 $dropResult = & psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d postgres -c "DROP DATABASE IF EXISTS $DB_NAME;" 2>&1
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "❌ Error al eliminar la base de datos"
+    Write-Error "[ERROR] Error al eliminar la base de datos"
     Write-Host $dropResult
     exit 1
 }
-Write-Success "✓ Base de datos eliminada"
+Write-Success "[OK] Base de datos eliminada"
 Write-Host ""
 
 # Recreate database
-Write-Info "📦 Recreando base de datos '$DB_NAME'..."
+Write-Info "[INFO] Recreando base de datos '$DB_NAME'..."
 $createResult = & psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d postgres -c "CREATE DATABASE $DB_NAME;" 2>&1
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "❌ Error al crear la base de datos"
+    Write-Error "[ERROR] Error al crear la base de datos"
     Write-Host $createResult
     exit 1
 }
-Write-Success "✓ Base de datos creada"
+Write-Success "[OK] Base de datos creada"
 Write-Host ""
 
 Write-Success "================================================"
-Write-Success "  ✓ Reset completado exitosamente"
+Write-Success "  [OK] Reset completado exitosamente"
 Write-Success "================================================"
 Write-Host ""
-Write-Info "Próximos pasos:"
+Write-Info "Proximos pasos:"
 Write-Host "  1. Ejecuta las migraciones: .\scripts\db-setup.ps1"
 Write-Host "  2. O con datos de prueba: .\scripts\db-setup.ps1 -Seed"
 Write-Host ""
