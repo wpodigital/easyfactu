@@ -14,27 +14,26 @@ app.post("/api/v1/invoices", async (req: Request, res: Response) => {
   try {
     const data = req.body;
     
-    // Parse invoice data from request
+    // Parse invoice data from request using VeriFactu field names
     const facturaData: CreateFacturaParams = {
-      id_version: data.IDVersion || data.idVersion || '1.0',
-      id_emisor_factura: data.IDEmisorFactura || data.idEmisor || '',
-      num_serie_factura: data.NumSerieFactura || data.numSerie || '',
-      fecha_expedicion_factura: data.FechaExpedicionFactura || data.fecha || new Date().toISOString().split('T')[0],
-      nombre_razon_emisor: data.NombreRazonEmisor || data.nombre || '',
+      nif_emisor_factura: data.NIF || data.nif || data.IDEmisorFactura || data.idEmisor || '',
+      num_serie_factura_emisor: data.NumeroSerie || data.numeroSerie || data.NumSerieFactura || data.numSerie || '',
+      fecha_expedicion_factura: data.FechaExpedicion || data.fecha || data.FechaExpedicionFactura || new Date().toISOString().split('T')[0],
       tipo_factura: data.TipoFactura || data.tipo || 'F1',
-      descripcion_operacion: data.DescripcionOperacion || data.descripcion || '',
-      importe_total: data.ImporteTotal || data.importe,
-      base_imponible_aimporte_total: data.BaseImponible || data.base,
-      cuota_total: data.CuotaTotal || data.cuota,
+      importe_total: parseFloat(data.ImporteTotal || data.importe || 0),
+      cuota_total: parseFloat(data.CuotaTotal || data.cuota || 0),
+      operacion: data.Operacion || data.operacion || 'A0',  // A0 = Alta normal
+      tipo_comunicacion: data.TipoComunicacion || 'A0',
+      estado_registro: 'Correcta',  // Initial state
     };
     
     // Get previous invoice for chaining
     const previousInvoice = await facturasRepository.getLastForChaining(
-      facturaData.id_emisor_factura
+      facturaData.nif_emisor_factura
     );
     
     if (previousInvoice) {
-      facturaData.id_factura_anterior = previousInvoice.id_factura;
+      facturaData.id_factura_anterior = previousInvoice.id;
     }
     
     // Store XML if provided
@@ -46,17 +45,17 @@ app.post("/api/v1/invoices", async (req: Request, res: Response) => {
     // For now, just create a placeholder
     const fechaHoraHuella = new Date();
     facturaData.huella = `HASH-${Date.now()}`;
-    facturaData.fecha_hora_huella_sig = fechaHoraHuella;
+    facturaData.fecha_hora_huso_gen_registro = fechaHoraHuella;
     
     // Insert into database
     const factura = await facturasRepository.create(facturaData);
     
     res.status(201).json({
-      id: factura.id_factura,
-      idEmisor: factura.id_emisor_factura,
-      numSerie: factura.num_serie_factura,
+      id: factura.id,
+      nif: factura.nif_emisor_factura,
+      numSerie: factura.num_serie_factura_emisor,
       fecha: factura.fecha_expedicion_factura,
-      status: factura.status,
+      status: factura.estado_registro,
       huella: factura.huella,
       timestamp: factura.created_at,
       message: 'Invoice created successfully. Use POST /api/v1/invoices/:id/validate to submit to AEAT.',
@@ -84,18 +83,16 @@ app.get("/api/v1/invoices/:id", async (req: Request, res: Response) => {
     }
     
     res.json({
-      id: factura.id_factura,
-      idEmisor: factura.id_emisor_factura,
-      numSerie: factura.num_serie_factura,
+      id: factura.id,
+      nif: factura.nif_emisor_factura,
+      numSerie: factura.num_serie_factura_emisor,
       fecha: factura.fecha_expedicion_factura,
-      nombreEmisor: factura.nombre_razon_emisor,
       tipoFactura: factura.tipo_factura,
-      descripcion: factura.descripcion_operacion,
       importeTotal: factura.importe_total,
-      baseImponible: factura.base_imponible_aimporte_total,
       cuotaTotal: factura.cuota_total,
       huella: factura.huella,
-      status: factura.status,
+      operacion: factura.operacion,
+      estadoRegistro: factura.estado_registro,
       validationStatus: factura.validation_status,
       validationCSV: factura.validation_csv,
       timestamp: factura.created_at,
@@ -133,7 +130,7 @@ app.post("/api/v1/invoices/:id/validate", async (req: Request, res: Response) =>
     );
     
     res.json({
-      id: updated?.id_factura,
+      id: updated?.id,
       validationResult: {
         estado: validationStatus,
         csv: csv,
@@ -163,8 +160,8 @@ app.get("/api/v1/invoices/:id/status", async (req: Request, res: Response) => {
     }
     
     res.json({
-      id: factura.id_factura,
-      status: factura.status,
+      id: factura.id,
+      status: factura.estado_registro,
       validationStatus: factura.validation_status,
       validationCSV: factura.validation_csv,
       validationTimestamp: factura.validation_timestamp,
@@ -245,12 +242,12 @@ app.get("/api/v1/invoices", async (req: Request, res: Response) => {
       total,
       count: facturas.length,
       invoices: facturas.map(f => ({
-        id: f.id_factura,
-        idEmisor: f.id_emisor_factura,
-        numSerie: f.num_serie_factura,
+        id: f.id,
+        idEmisor: f.nif_emisor_factura,
+        numSerie: f.num_serie_factura_emisor,
         fecha: f.fecha_expedicion_factura,
         tipoFactura: f.tipo_factura,
-        status: f.status,
+        status: f.estado_registro,
         validationStatus: f.validation_status,
         timestamp: f.created_at,
       })),
@@ -301,21 +298,21 @@ app.post("/api/v1/invoices/import", async (req: Request, res: Response) => {
     // TODO: Parse XML and extract invoice data
     // For now, create a placeholder
     const facturaData: CreateFacturaParams = {
-      id_version: '1.0',
-      id_emisor_factura: 'IMPORTED',
-      num_serie_factura: `IMP-${Date.now()}`,
+      nif_emisor_factura: 'IMPORTED',
+      num_serie_factura_emisor: `IMP-${Date.now()}`,
       fecha_expedicion_factura: new Date().toISOString().split('T')[0],
-      nombre_razon_emisor: 'Imported Invoice',
       tipo_factura: 'F1',
-      descripcion_operacion: 'Imported from XML',
+      operacion: 'A0',
       xml_content: xml,
+      importe_total: 0,
+      cuota_total: 0,
     };
     
     const factura = await facturasRepository.create(facturaData);
     
     res.status(201).json({
-      id: factura.id_factura,
-      status: factura.status,
+      id: factura.id,
+      status: factura.estado_registro,
       timestamp: factura.created_at,
       message: 'Invoice imported successfully',
     });

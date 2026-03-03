@@ -8,50 +8,60 @@ import { getPool } from '../config/database';
 
 /**
  * Database model for Factura
+ * Maps to VeriFactu schema with compatibility fields
  */
 export interface FacturaDB {
-  id_factura?: number;
-  id_version: string;
-  id_emisor_factura: string;
-  num_serie_factura: string;
-  fecha_expedicion_factura: string;
-  nombre_razon_emisor: string;
-  tipo_factura: string;
-  descripcion_operacion: string;
-  importe_total?: number;
-  base_imponible_aimporte_total?: number;
-  cuota_total?: number;
-  huella?: string;
-  fecha_hora_huella_sig?: Date;
-  id_factura_anterior?: number;
-  created_at?: Date;
-  updated_at?: Date;
-  status?: string;
+  // Primary key (VeriFactu schema uses 'id', not 'id_factura')
+  id?: number;
+  
+  // VeriFactu required fields
+  nif_emisor_factura: string;  // NIF del emisor
+  num_serie_factura_emisor: string;  // Número de serie de la factura
+  fecha_expedicion_factura: string;  // Fecha de expedición (YYYY-MM-DD)
+  tipo_factura: string;  // F1, F2, F3, F4, R1-R5
+  cuota_total?: number;  // Cuota total de la factura
+  importe_total?: number;  // Importe total de la factura
+  huella?: string;  // Hash/Huella de la factura
+  fecha_hora_huso_gen_registro?: Date;  // Timestamp de generación
+  operacion: string;  // A0, A1, AN (Alta normal, Alta registro previo, Anulación)
+  tipo_comunicacion?: string;  // A0, A1, etc.
+  estado_registro?: string;  // Estado: Correcta, Incompleta, Error
+  codigo_seguro_verificacion?: string;  // CSV de AEAT
+  qr?: string;  // Código QR
+  
+  // Compatibility fields (added by migration 20260303)
   xml_content?: string;
   validation_timestamp?: Date;
   validation_status?: string;
   validation_csv?: string;
   validation_errors?: string;
+  id_factura_anterior?: number;  // Reference to previous invoice
+  
+  // Timestamps
+  created_at?: Date;
+  updated_at?: Date;
 }
 
 /**
  * Insert parameters for creating a factura
+ * Uses VeriFactu field names
  */
 export interface CreateFacturaParams {
-  id_version: string;
-  id_emisor_factura: string;
-  num_serie_factura: string;
+  nif_emisor_factura: string;
+  num_serie_factura_emisor: string;
   fecha_expedicion_factura: string;
-  nombre_razon_emisor: string;
   tipo_factura: string;
-  descripcion_operacion: string;
-  importe_total?: number;
-  base_imponible_aimporte_total?: number;
   cuota_total?: number;
+  importe_total?: number;
   huella?: string;
-  fecha_hora_huella_sig?: Date;
-  id_factura_anterior?: number;
+  fecha_hora_huso_gen_registro?: Date;
+  operacion: string;  // A0, A1, AN
+  tipo_comunicacion?: string;
+  estado_registro?: string;
+  codigo_seguro_verificacion?: string;
+  qr?: string;
   xml_content?: string;
+  id_factura_anterior?: number;
 }
 
 /**
@@ -66,45 +76,46 @@ export class FacturasRepository {
 
   /**
    * Create a new factura
+   * Uses VeriFactu schema field names
    */
   async create(params: CreateFacturaParams): Promise<FacturaDB> {
     const query = `
       INSERT INTO facturas (
-        id_version,
-        id_emisor_factura,
-        num_serie_factura,
+        nif_emisor_factura,
+        num_serie_factura_emisor,
         fecha_expedicion_factura,
-        nombre_razon_emisor,
         tipo_factura,
-        descripcion_operacion,
         importe_total,
-        base_imponible_aimporte_total,
         cuota_total,
         huella,
-        fecha_hora_huella_sig,
+        fecha_hora_huso_gen_registro,
+        operacion,
+        tipo_comunicacion,
+        estado_registro,
+        codigo_seguro_verificacion,
+        qr,
         id_factura_anterior,
-        xml_content,
-        status
+        xml_content
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       RETURNING *
     `;
 
     const values = [
-      params.id_version,
-      params.id_emisor_factura,
-      params.num_serie_factura,
+      params.nif_emisor_factura,
+      params.num_serie_factura_emisor,
       params.fecha_expedicion_factura,
-      params.nombre_razon_emisor,
       params.tipo_factura,
-      params.descripcion_operacion,
       params.importe_total,
-      params.base_imponible_aimporte_total,
       params.cuota_total,
       params.huella,
-      params.fecha_hora_huella_sig,
+      params.fecha_hora_huso_gen_registro || new Date(),
+      params.operacion || 'A0',  // Default: Alta normal
+      params.tipo_comunicacion || 'A0',
+      params.estado_registro || 'Correcta',
+      params.codigo_seguro_verificacion,
+      params.qr,
       params.id_factura_anterior,
       params.xml_content,
-      'pending', // Initial status
     ];
 
     const result = await this.pool.query(query, values);
@@ -115,7 +126,7 @@ export class FacturasRepository {
    * Find factura by ID
    */
   async findById(id: number): Promise<FacturaDB | null> {
-    const query = 'SELECT * FROM facturas WHERE id_factura = $1';
+    const query = 'SELECT * FROM facturas WHERE id = $1';
     const result = await this.pool.query(query, [id]);
     return result.rows[0] || null;
   }
@@ -124,44 +135,44 @@ export class FacturasRepository {
    * Find factura by series and number
    */
   async findBySeriesAndNumber(
-    idEmisor: string,
+    nifEmisor: string,
     numSerie: string
   ): Promise<FacturaDB | null> {
     const query = `
       SELECT * FROM facturas 
-      WHERE id_emisor_factura = $1 AND num_serie_factura = $2
-      ORDER BY id_factura DESC
+      WHERE nif_emisor_factura = $1 AND num_serie_factura_emisor = $2
+      ORDER BY id DESC
       LIMIT 1
     `;
-    const result = await this.pool.query(query, [idEmisor, numSerie]);
+    const result = await this.pool.query(query, [nifEmisor, numSerie]);
     return result.rows[0] || null;
   }
 
   /**
    * Get all facturas for an issuer
    */
-  async findByIssuer(idEmisor: string, limit: number = 100): Promise<FacturaDB[]> {
+  async findByIssuer(nifEmisor: string, limit: number = 100): Promise<FacturaDB[]> {
     const query = `
       SELECT * FROM facturas 
-      WHERE id_emisor_factura = $1
-      ORDER BY fecha_expedicion_factura DESC, id_factura DESC
+      WHERE nif_emisor_factura = $1
+      ORDER BY fecha_expedicion_factura DESC, id DESC
       LIMIT $2
     `;
-    const result = await this.pool.query(query, [idEmisor, limit]);
+    const result = await this.pool.query(query, [nifEmisor, limit]);
     return result.rows;
   }
 
   /**
    * Get the last factura for chaining
    */
-  async getLastForChaining(idEmisor: string): Promise<FacturaDB | null> {
+  async getLastForChaining(nifEmisor: string): Promise<FacturaDB | null> {
     const query = `
       SELECT * FROM facturas 
-      WHERE id_emisor_factura = $1 AND huella IS NOT NULL
-      ORDER BY fecha_hora_huella_sig DESC, id_factura DESC
+      WHERE nif_emisor_factura = $1 AND huella IS NOT NULL
+      ORDER BY fecha_hora_huso_gen_registro DESC, id DESC
       LIMIT 1
     `;
-    const result = await this.pool.query(query, [idEmisor]);
+    const result = await this.pool.query(query, [nifEmisor]);
     return result.rows[0] || null;
   }
 
@@ -182,7 +193,7 @@ export class FacturasRepository {
         validation_errors = $4,
         validation_timestamp = NOW(),
         updated_at = NOW()
-      WHERE id_factura = $1
+      WHERE id = $1
       RETURNING *
     `;
     const result = await this.pool.query(query, [id, status, csv, errors]);
@@ -201,9 +212,9 @@ export class FacturasRepository {
       UPDATE facturas 
       SET 
         huella = $2,
-        fecha_hora_huella_sig = $3,
+        fecha_hora_huso_gen_registro = $3,
         updated_at = NOW()
-      WHERE id_factura = $1
+      WHERE id = $1
       RETURNING *
     `;
     const result = await this.pool.query(query, [id, huella, fechaHora]);
@@ -216,9 +227,9 @@ export class FacturasRepository {
   async delete(id: number): Promise<boolean> {
     const query = `
       UPDATE facturas 
-      SET status = 'cancelled', updated_at = NOW()
-      WHERE id_factura = $1
-      RETURNING id_factura
+      SET estado_registro = 'Anulada', updated_at = NOW()
+      WHERE id = $1
+      RETURNING id
     `;
     const result = await this.pool.query(query, [id]);
     return result.rows.length > 0;
@@ -230,7 +241,7 @@ export class FacturasRepository {
   async list(offset: number = 0, limit: number = 50): Promise<FacturaDB[]> {
     const query = `
       SELECT * FROM facturas 
-      ORDER BY fecha_expedicion_factura DESC, id_factura DESC
+      ORDER BY fecha_expedicion_factura DESC, id DESC
       OFFSET $1 LIMIT $2
     `;
     const result = await this.pool.query(query, [offset, limit]);
