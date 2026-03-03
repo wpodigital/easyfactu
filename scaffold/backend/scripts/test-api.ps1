@@ -92,50 +92,29 @@ Test-Endpoint -Method "GET" -Path "/api/v1/invoices" -Description "List All Invo
 # Test 3: List with Pagination
 Test-Endpoint -Method "GET" -Path "/api/v1/invoices?page=1&limit=10" -Description "List Invoices (Paginated)"
 
-# Test 4: Create Invoice
+# Test 4: Create Invoice  
 $invoiceData = @{
-    idEmisorFactura = "B12345678"
-    numSerieFactura = "TEST-PS1"
-    fechaExpedicionFactura = "01-01-2024"
-    tipoFactura = "F1"
-    cuotaTotal = 21.00
-    importeTotal = 121.00
-    destinatarios = @(
-        @{
-            nombreRazon = "Cliente PowerShell"
-            nif = "12345678Z"
-        }
-    )
-    desgloses = @(
-        @{
-            claveRegimen = "01"
-            tipoImpositivo = 21.00
-            baseImponible = 100.00
-            cuotaRepercutida = 21.00
-        }
-    )
-    sistemaInformatico = @{
-        nombreRazon = "EasyFactu"
-        nif = "B87654321"
-        nombreSistemaInformatico = "EasyFactu API"
-        idSistemaInformatico = "EASY001"
-        version = "1.0"
-        numeroInstalacion = "1"
-    }
+    nif = "B12345678"
+    numeroSerie = "TEST-PS1"
+    fecha = "2024-01-01"
+    tipo = "F1"
+    cuota = 21.00
+    importe = 121.00
+    operacion = "A0"
 } | ConvertTo-Json -Depth 10
 
 Test-Endpoint -Method "POST" -Path "/api/v1/invoices" -Description "Create Invoice" -Body $invoiceData
 
-# Test 5: Get Invoice by ID (using test data)
+# Test 5: Get Invoice by ID (using test data - first invoice should be id=1)
 Write-Info "Testing: Get Invoice by ID"
-Write-Host "  GET /api/v1/invoices/TEST-001" -ForegroundColor DarkGray
+Write-Host "  GET /api/v1/invoices/1" -ForegroundColor DarkGray
 try {
-    $response = Invoke-WebRequest -Uri "$API_URL/api/v1/invoices/TEST-001" -Method GET -ErrorAction Stop
+    $response = Invoke-WebRequest -Uri "$API_URL/api/v1/invoices/1" -Method GET -ErrorAction Stop
     Write-Success "  [OK] Status: $($response.StatusCode)"
     $testsPassed++
 } catch {
     if ($_.Exception.Response.StatusCode.Value__ -eq 404) {
-        Write-Warning "  [WARNING]  Invoice TEST-001 not found (expected if test data not loaded)"
+        Write-Warning "  [WARNING]  Invoice id=1 not found (run db-setup.ps1 -Seed to load test data)"
         $testsPassed++
     } else {
         Write-Error "  [ERROR] Error: $($_.Exception.Message)"
@@ -146,14 +125,14 @@ Write-Host ""
 
 # Test 6: Get Invoice Status
 Write-Info "Testing: Get Invoice Status"
-Write-Host "  GET /api/v1/invoices/TEST-001/status" -ForegroundColor DarkGray
+Write-Host "  GET /api/v1/invoices/1/status" -ForegroundColor DarkGray
 try {
-    $response = Invoke-WebRequest -Uri "$API_URL/api/v1/invoices/TEST-001/status" -Method GET -ErrorAction Stop
+    $response = Invoke-WebRequest -Uri "$API_URL/api/v1/invoices/1/status" -Method GET -ErrorAction Stop
     Write-Success "  [OK] Status: $($response.StatusCode)"
     $testsPassed++
 } catch {
     if ($_.Exception.Response.StatusCode.Value__ -eq 404) {
-        Write-Warning "  [WARNING]  Invoice TEST-001 not found (expected if test data not loaded)"
+        Write-Warning "  [WARNING]  Invoice id=1 not found (run db-setup.ps1 -Seed to load test data)"
         $testsPassed++
     } else {
         Write-Error "  [ERROR] Error: $($_.Exception.Message)"
@@ -164,14 +143,14 @@ Write-Host ""
 
 # Test 7: Get Invoice XML
 Write-Info "Testing: Get Invoice XML"
-Write-Host "  GET /api/v1/invoices/TEST-001/xml" -ForegroundColor DarkGray
+Write-Host "  GET /api/v1/invoices/1/xml" -ForegroundColor DarkGray
 try {
-    $response = Invoke-WebRequest -Uri "$API_URL/api/v1/invoices/TEST-001/xml" -Method GET -ErrorAction Stop
+    $response = Invoke-WebRequest -Uri "$API_URL/api/v1/invoices/1/xml" -Method GET -ErrorAction Stop
     Write-Success "  [OK] Status: $($response.StatusCode)"
     $testsPassed++
 } catch {
     if ($_.Exception.Response.StatusCode.Value__ -eq 404) {
-        Write-Warning "  [WARNING]  Invoice TEST-001 not found (expected if test data not loaded)"
+        Write-Warning "  [WARNING]  Invoice id=1 not found (run db-setup.ps1 -Seed to load test data)"
         $testsPassed++
     } else {
         Write-Error "  [ERROR] Error: $($_.Exception.Message)"
