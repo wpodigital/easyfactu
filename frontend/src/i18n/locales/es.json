@@ -70,12 +70,24 @@
     "provincia": "Provincia",
     "pais": "País"
   },
+  "nav": {
+    "dashboard": "Panel de Control",
+    "clientes": "Clientes",
+    "proveedores": "Proveedores",
+    "facturasEmitidas": "Facturas Emitidas",
+    "facturasRecibidas": "Facturas Recibidas",
+    "renta": "Declaración de Renta",
+    "configuracion": "Configuración",
+    "ayuda": "Ayuda"
+  },
   "common": {
     "save": "Guardar",
     "cancel": "Cancelar",
     "edit": "Editar",
     "delete": "Eliminar",
     "search": "Buscar",
-    "loading": "Cargando..."
+    "loading": "Cargando...",
+    "underConstruction": "Sección en Construcción",
+    "backToDashboard": "Volver al Panel de Control"
   }
 }

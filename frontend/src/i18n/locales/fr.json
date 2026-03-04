@@ -49,5 +49,19 @@
     "fr": "Français",
     "de": "Deutsch",
     "select": "Sélectionner la langue"
+  },
+  "nav": {
+    "dashboard": "Tableau de Bord",
+    "clientes": "Clients",
+    "proveedores": "Fournisseurs",
+    "facturasEmitidas": "Factures Émises",
+    "facturasRecibidas": "Factures Reçues",
+    "renta": "Déclaration de Revenus",
+    "configuracion": "Configuration",
+    "ayuda": "Aide"
+  },
+  "common": {
+    "underConstruction": "En Construction",
+    "backToDashboard": "Retour au Tableau de Bord"
   }
 }

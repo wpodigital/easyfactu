@@ -49,5 +49,19 @@
     "fr": "Français",
     "de": "Deutsch",
     "select": "Sprache auswählen"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "clientes": "Kunden",
+    "proveedores": "Lieferanten",
+    "facturasEmitidas": "Ausgestellte Rechnungen",
+    "facturasRecibidas": "Erhaltene Rechnungen",
+    "renta": "Steuererklärung",
+    "configuracion": "Einstellungen",
+    "ayuda": "Hilfe"
+  },
+  "common": {
+    "underConstruction": "In Bearbeitung",
+    "backToDashboard": "Zurück zum Dashboard"
   }
 }

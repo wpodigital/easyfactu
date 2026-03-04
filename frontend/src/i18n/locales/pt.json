@@ -49,5 +49,19 @@
     "fr": "Français",
     "de": "Deutsch",
     "select": "Selecionar idioma"
+  },
+  "nav": {
+    "dashboard": "Painel de Controle",
+    "clientes": "Clientes",
+    "proveedores": "Fornecedores",
+    "facturasEmitidas": "Faturas Emitidas",
+    "facturasRecibidas": "Faturas Recebidas",
+    "renta": "Declaração de Renda",
+    "configuracion": "Configurações",
+    "ayuda": "Ajuda"
+  },
+  "common": {
+    "underConstruction": "Em Construção",
+    "backToDashboard": "Voltar ao Painel"
   }
 }

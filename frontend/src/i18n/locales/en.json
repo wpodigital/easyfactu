@@ -49,5 +49,19 @@
     "fr": "Français",
     "de": "Deutsch",
     "select": "Select language"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "clientes": "Clients",
+    "proveedores": "Suppliers",
+    "facturasEmitidas": "Issued Invoices",
+    "facturasRecibidas": "Received Invoices",
+    "renta": "Tax Return",
+    "configuracion": "Settings",
+    "ayuda": "Help"
+  },
+  "common": {
+    "underConstruction": "Under Construction",
+    "backToDashboard": "Back to Dashboard"
   }
 }
