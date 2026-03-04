@@ -31,15 +31,18 @@ INSERT INTO sistema_informatico (
 -- Insert sample invoices (using VeriFactu schema field names)
 INSERT INTO facturas (
     id_version,
-    nif_emisor_factura,
-    num_serie_factura_emisor,
+    id_emisor_factura,
+    num_serie_factura,
+    nombre_razon_emisor,
     fecha_expedicion_factura,
     tipo_factura,
     cuota_total,
     importe_total,
     descripcion_operacion,
     operacion,
-    tipo_comunicacion,
+    huella,
+    fecha_hora_huso_gen_registro,
+    primer_registro,
     estado_registro,
     created_at,
     updated_at
@@ -48,13 +51,16 @@ INSERT INTO facturas (
     '1.0',
     'B87654321',
     'TEST-001',
+    'EasyFactu Test S.L.',
     '2024-01-15',
     'F1', -- Factura (Art. 6, 7.2 y 7.3 Rgto Facturación)
     21.00,
     121.00,
     'Servicios de consultoría',
     'A0', -- Alta normal
-    'A0', -- Comunicación normal
+    '0000000000000000000000000000000000000000000000000000000000000001', -- Temporary hash
+    NOW(),
+    'S', -- Primer registro
     'Correcta',
     NOW(),
     NOW()
@@ -63,13 +69,16 @@ INSERT INTO facturas (
     '1.0',
     'B87654321',
     'TEST-002',
+    'EasyFactu Test S.L.',
     '2024-01-16',
     'F1',
     42.00,
     242.00,
     'Venta de productos',
     'A0',
-    'A0',
+    '0000000000000000000000000000000000000000000000000000000000000002', -- Temporary hash
+    NOW(),
+    'N', -- No es primer registro
     'Correcta',
     NOW(),
     NOW()
@@ -78,13 +87,16 @@ INSERT INTO facturas (
     '1.0',
     'B87654321',
     'TEST-003',
+    'EasyFactu Test S.L.',
     '2024-01-17',
     'F2', -- Factura Simplificada (Art. 7.2 y 7.3 Rgto Facturación)
     10.50,
     60.50,
     'Venta en mostrador',
     'A0',
-    'A0',
+    '0000000000000000000000000000000000000000000000000000000000000003', -- Temporary hash
+    NOW(),
+    'N', -- No es primer registro
     'Correcta',
     NOW(),
     NOW()
@@ -100,7 +112,7 @@ INSERT INTO destinatarios (
     codigo_pais
 ) VALUES
 (
-    (SELECT id FROM facturas WHERE num_serie_factura_emisor = 'TEST-001'),
+    (SELECT id FROM facturas WHERE num_serie_factura = 'TEST-001'),
     'Cliente Ejemplo S.A.',
     'B11111111',
     NULL,
@@ -108,7 +120,7 @@ INSERT INTO destinatarios (
     'ES'
 ),
 (
-    (SELECT id FROM facturas WHERE num_serie_factura_emisor = 'TEST-002'),
+    (SELECT id FROM facturas WHERE num_serie_factura = 'TEST-002'),
     'Cliente Internacional Ltd.',
     NULL,
     'GB123456789',
@@ -125,21 +137,21 @@ INSERT INTO desgloses (
     cuota_repercutida
 ) VALUES
 (
-    (SELECT id FROM facturas WHERE num_serie_factura_emisor = 'TEST-001'),
+    (SELECT id FROM facturas WHERE num_serie_factura = 'TEST-001'),
     '01',
     21.00,
     100.00,
     21.00
 ),
 (
-    (SELECT id FROM facturas WHERE num_serie_factura_emisor = 'TEST-002'),
+    (SELECT id FROM facturas WHERE num_serie_factura = 'TEST-002'),
     '01',
     21.00,
     200.00,
     42.00
 ),
 (
-    (SELECT id FROM facturas WHERE num_serie_factura_emisor = 'TEST-003'),
+    (SELECT id FROM facturas WHERE num_serie_factura = 'TEST-003'),
     '01',
     21.00,
     50.00,
@@ -154,7 +166,7 @@ SELECT
 FROM facturas;
 
 SELECT 
-    num_serie_factura_emisor,
+    num_serie_factura,
     fecha_expedicion_factura,
     tipo_factura,
     importe_total,

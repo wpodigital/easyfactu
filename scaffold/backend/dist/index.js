@@ -18,18 +18,18 @@ app.post("/api/v1/invoices", async (req, res) => {
         const data = req.body;
         // Parse invoice data from request using VeriFactu field names
         const facturaData = {
-            nif_emisor_factura: data.NIF || data.nif || data.IDEmisorFactura || data.idEmisor || '',
-            num_serie_factura_emisor: data.NumeroSerie || data.numeroSerie || data.NumSerieFactura || data.numSerie || '',
+            id_emisor_factura: data.NIF || data.nif || data.IDEmisorFactura || data.idEmisor || '',
+            nombre_razon_emisor: data.NombreRazon || data.nombreRazon || data.nombre || 'Sin nombre',
+            num_serie_factura: data.NumeroSerie || data.numeroSerie || data.NumSerieFactura || data.numSerie || '',
             fecha_expedicion_factura: data.FechaExpedicion || data.fecha || data.FechaExpedicionFactura || new Date().toISOString().split('T')[0],
             tipo_factura: data.TipoFactura || data.tipo || 'F1',
             importe_total: parseFloat(data.ImporteTotal || data.importe || 0),
             cuota_total: parseFloat(data.CuotaTotal || data.cuota || 0),
             operacion: data.Operacion || data.operacion || 'A0', // A0 = Alta normal
-            tipo_comunicacion: data.TipoComunicacion || 'A0',
             estado_registro: 'Correcta', // Initial state
         };
         // Get previous invoice for chaining
-        const previousInvoice = await facturas_repository_1.facturasRepository.getLastForChaining(facturaData.nif_emisor_factura);
+        const previousInvoice = await facturas_repository_1.facturasRepository.getLastForChaining(facturaData.id_emisor_factura);
         if (previousInvoice) {
             facturaData.id_factura_anterior = previousInvoice.id;
         }
@@ -46,8 +46,8 @@ app.post("/api/v1/invoices", async (req, res) => {
         const factura = await facturas_repository_1.facturasRepository.create(facturaData);
         res.status(201).json({
             id: factura.id,
-            nif: factura.nif_emisor_factura,
-            numSerie: factura.num_serie_factura_emisor,
+            nif: factura.id_emisor_factura,
+            numSerie: factura.num_serie_factura,
             fecha: factura.fecha_expedicion_factura,
             status: factura.estado_registro,
             huella: factura.huella,
@@ -76,8 +76,8 @@ app.get("/api/v1/invoices/:id", async (req, res) => {
         }
         res.json({
             id: factura.id,
-            nif: factura.nif_emisor_factura,
-            numSerie: factura.num_serie_factura_emisor,
+            nif: factura.id_emisor_factura,
+            numSerie: factura.num_serie_factura,
             fecha: factura.fecha_expedicion_factura,
             tipoFactura: factura.tipo_factura,
             importeTotal: factura.importe_total,
@@ -213,8 +213,8 @@ app.get("/api/v1/invoices", async (req, res) => {
             count: facturas.length,
             invoices: facturas.map(f => ({
                 id: f.id,
-                idEmisor: f.nif_emisor_factura,
-                numSerie: f.num_serie_factura_emisor,
+                idEmisor: f.id_emisor_factura,
+                numSerie: f.num_serie_factura,
                 fecha: f.fecha_expedicion_factura,
                 tipoFactura: f.tipo_factura,
                 status: f.estado_registro,
@@ -264,8 +264,9 @@ app.post("/api/v1/invoices/import", async (req, res) => {
         // TODO: Parse XML and extract invoice data
         // For now, create a placeholder
         const facturaData = {
-            nif_emisor_factura: 'IMPORTED',
-            num_serie_factura_emisor: `IMP-${Date.now()}`,
+            id_emisor_factura: 'IMPORTED',
+            nombre_razon_emisor: 'Imported Invoice',
+            num_serie_factura: `IMP-${Date.now()}`,
             fecha_expedicion_factura: new Date().toISOString().split('T')[0],
             tipo_factura: 'F1',
             operacion: 'A0',

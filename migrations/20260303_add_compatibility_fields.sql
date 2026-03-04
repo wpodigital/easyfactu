@@ -81,8 +81,10 @@ CREATE OR REPLACE VIEW facturas_api AS
 SELECT 
   id,
   id AS id_factura,  -- Alias for compatibility
-  nif_emisor_factura,
-  num_serie_factura_emisor,
+  id_emisor_factura,
+  id_emisor_factura AS nif_emisor_factura,  -- Alias (assuming NIF is the ID type)
+  num_serie_factura,
+  num_serie_factura AS num_serie_factura_emisor,  -- Alias
   fecha_expedicion_factura,
   tipo_factura,
   cuota_total,
@@ -91,11 +93,8 @@ SELECT
   fecha_hora_huso_gen_registro,
   fecha_hora_huso_gen_registro AS fecha_hora_huella_sig,  -- Alias
   operacion,
-  tipo_comunicacion,
   estado_registro,
   estado_registro::VARCHAR AS status,  -- Alias
-  codigo_seguro_verificacion,
-  qr,
   xml_content,
   validation_timestamp,
   validation_status,
