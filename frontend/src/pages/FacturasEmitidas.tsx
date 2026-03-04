@@ -133,7 +133,7 @@ export default function FacturasEmitidas() {
               </div>
             </div>
             <button
-              onClick={() => alert('Funcionalidad de crear factura en desarrollo')}
+              onClick={() => alert('La funcionalidad de crear facturas estará disponible próximamente.\n\nPor ahora puedes ver, validar y eliminar las facturas existentes.')}
               className="flex items-center space-x-2 px-4 py-2 bg-[#4a8fa0] text-white rounded-lg hover:bg-[#3a7080] transition-colors"
             >
               <Plus className="h-5 w-5" />

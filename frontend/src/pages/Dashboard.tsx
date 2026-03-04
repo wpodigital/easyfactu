@@ -27,37 +27,37 @@ export const Dashboard: React.FC = () => {
       key: 'proveedores',
       icon: Truck,
       color: '#3a6a82',
-      onClick: () => console.log('Proveedores clicked'),
+      onClick: () => navigate('/proveedores'),
     },
     {
       key: 'facturas_emitidas',
       icon: FileText,
       color: '#4a8fa0',
-      onClick: () => console.log('Facturas emitidas clicked'),
+      onClick: () => navigate('/facturas-emitidas'),
     },
     {
       key: 'facturas_recibidas',
       icon: Receipt,
       color: '#d4a574',
-      onClick: () => console.log('Facturas recibidas clicked'),
+      onClick: () => navigate('/facturas-recibidas'),
     },
     {
       key: 'renta',
       icon: Calculator,
       color: '#c4625a',
-      onClick: () => console.log('Renta clicked'),
+      onClick: () => navigate('/renta'),
     },
     {
       key: 'config',
       icon: Settings,
       color: '#6d4c51',
-      onClick: () => console.log('Configuración clicked'),
+      onClick: () => navigate('/configuracion'),
     },
     {
       key: 'ayuda',
       icon: HelpCircle,
       color: '#7a5a5a',
-      onClick: () => console.log('Ayuda clicked'),
+      onClick: () => navigate('/ayuda'),
     },
   ];
 
