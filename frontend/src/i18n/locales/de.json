@@ -1,0 +1,53 @@
+{
+  "app": {
+    "name": "EasyFactu",
+    "title": "VeriFactu Rechnungssystem"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "sections": {
+      "clientes": {
+        "title": "Kunden",
+        "description": "Verwalten Sie alle Informationen Ihrer Kunden",
+        "subtitle": "Hier können Sie Datensätze erstellen bearbeiten und verwalten"
+      },
+      "proveedores": {
+        "title": "Lieferanten",
+        "description": "Verwalten Sie Ihre Lieferanten deren Daten und verknüpfte Dokumente"
+      },
+      "facturas_emitidas": {
+        "title": "Ausgestellte Rechnungen",
+        "description": "Sehen Sie ein erstellen Sie und verwalten Sie die Rechnungen die Sie an Ihre Kunden senden"
+      },
+      "facturas_recibidas": {
+        "title": "Erhaltene Rechnungen",
+        "description": "Führen Sie Aufzeichnungen über alle Rechnungen die Sie von Ihren Lieferanten erhalten"
+      },
+      "renta": {
+        "title": "Steuererklärung",
+        "description": "Greifen Sie auf eine Zusammenfassung Ihrer Einnahmen Ausgaben und Berechnungen im Zusammenhang mit Ihrer Steuererklärung zu"
+      },
+      "config": {
+        "title": "Einstellungen",
+        "description": "Passen Sie die Anwendung an Ihre Bedürfnisse an"
+      },
+      "ayuda": {
+        "title": "Hilfe",
+        "description": "Antworten auf häufig gestellte Fragen und Support zur Lösung von Zweifeln"
+      }
+    }
+  },
+  "theme": {
+    "light": "Hell",
+    "dark": "Dunkel",
+    "toggle": "Thema umschalten"
+  },
+  "language": {
+    "es": "Español",
+    "en": "English",
+    "pt": "Português",
+    "fr": "Français",
+    "de": "Deutsch",
+    "select": "Sprache auswählen"
+  }
+}

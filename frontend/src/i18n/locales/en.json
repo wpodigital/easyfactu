@@ -1,0 +1,53 @@
+{
+  "app": {
+    "name": "EasyFactu",
+    "title": "VeriFactu Invoicing System"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "sections": {
+      "clientes": {
+        "title": "Customers",
+        "description": "Manage all your customer information",
+        "subtitle": "Here you can create edit and manage records"
+      },
+      "proveedores": {
+        "title": "Suppliers",
+        "description": "Manage your suppliers their data and linked documents"
+      },
+      "facturas_emitidas": {
+        "title": "Issued Invoices",
+        "description": "View create and manage the invoices you send to your customers"
+      },
+      "facturas_recibidas": {
+        "title": "Received Invoices",
+        "description": "Keep track of all invoices you receive from your suppliers"
+      },
+      "renta": {
+        "title": "Tax Return",
+        "description": "Access a summary of your income expenses and calculations related to your tax return"
+      },
+      "config": {
+        "title": "Settings",
+        "description": "Customize the application according to your needs"
+      },
+      "ayuda": {
+        "title": "Help",
+        "description": "Frequently asked questions and support to resolve doubts"
+      }
+    }
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "toggle": "Toggle theme"
+  },
+  "language": {
+    "es": "Español",
+    "en": "English",
+    "pt": "Português",
+    "fr": "Français",
+    "de": "Deutsch",
+    "select": "Select language"
+  }
+}

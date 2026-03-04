@@ -1,0 +1,53 @@
+{
+  "app": {
+    "name": "EasyFactu",
+    "title": "Sistema de Faturação VeriFactu"
+  },
+  "dashboard": {
+    "title": "Painel de Controle",
+    "sections": {
+      "clientes": {
+        "title": "Clientes",
+        "description": "Gerencie todas as informações dos seus clientes",
+        "subtitle": "Aqui você pode criar editar e gerenciar fichas"
+      },
+      "proveedores": {
+        "title": "Fornecedores",
+        "description": "Administre seus fornecedores seus dados e documentos vinculados"
+      },
+      "facturas_emitidas": {
+        "title": "Faturas Emitidas",
+        "description": "Consulte crie e gerencie as faturas que envia aos seus clientes"
+      },
+      "facturas_recibidas": {
+        "title": "Faturas Recebidas",
+        "description": "Mantenha o registro de todas as faturas que recebe dos seus fornecedores"
+      },
+      "renta": {
+        "title": "Declaração",
+        "description": "Acesse um resumo de suas receitas despesas e cálculos relacionados à sua declaração de imposto"
+      },
+      "config": {
+        "title": "Configurações",
+        "description": "Personalize o aplicativo de acordo com suas necessidades"
+      },
+      "ayuda": {
+        "title": "Ajuda",
+        "description": "Respostas a perguntas frequentes e suporte para resolver dúvidas"
+      }
+    }
+  },
+  "theme": {
+    "light": "Claro",
+    "dark": "Escuro",
+    "toggle": "Alternar tema"
+  },
+  "language": {
+    "es": "Español",
+    "en": "English",
+    "pt": "Português",
+    "fr": "Français",
+    "de": "Deutsch",
+    "select": "Selecionar idioma"
+  }
+}
