@@ -42,8 +42,9 @@ export const certificadosRepository = {
   ): Promise<CertificadoDB> {
     try {
       // Parse .p12 file with node-forge
-      const p12Der = forge.util.binary.raw.decode(p12Buffer);
-      const p12Asn1 = forge.asn1.fromDer(p12Der);
+      // Convert Buffer to binary string
+      const p12BinaryString = p12Buffer.toString('binary');
+      const p12Asn1 = forge.asn1.fromDer(p12BinaryString);
       const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, password);
 
       // Extract certificate and private key
