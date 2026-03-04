@@ -1,10 +1,10 @@
 import React from 'react';
-import { LucideIcon } from 'lucide-react';
+import type { LucideProps } from 'lucide-react';
 
 interface DashboardCardProps {
   title: string;
   description: string;
-  icon: LucideIcon;
+  icon: React.ComponentType<LucideProps>;
   color: string;
   onClick?: () => void;
 }
