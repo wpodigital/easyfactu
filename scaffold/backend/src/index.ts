@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import { testConnection, initializeDatabase, closePool } from "./config/database";
 import { facturasRepository, CreateFacturaParams } from "./repositories/facturas.repository";
 import { ClientesRepository, CreateClienteParams, UpdateClienteParams } from "./repositories/clientes.repository";
+import { proveedoresRepository, CreateProveedorParams } from "./repositories/proveedores.repository";
 import { pool } from "./config/database";
 
 const clientesRepository = new ClientesRepository(pool);
@@ -560,6 +561,170 @@ app.get("/api/v1/clientes/stats", async (req: Request, res: Response) => {
     res.json({ total });
   } catch (error: any) {
     console.error('Error getting cliente stats:', error);
+    res.status(500).json({ error: 'Error al obtener estadísticas', details: error.message });
+  }
+});
+
+// ===================================================================
+// Proveedores Endpoints
+// ===================================================================
+
+/**
+ * GET /api/v1/proveedores
+ * List all proveedores with optional search and pagination
+ */
+app.get("/api/v1/proveedores", async (req: Request, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const search = req.query.search as string;
+
+    const result = await proveedoresRepository.findAll({
+      page,
+      limit,
+      search,
+      activo: true
+    });
+
+    res.json({
+      total: result.total,
+      count: result.proveedores.length,
+      proveedores: result.proveedores
+    });
+  } catch (error: any) {
+    console.error('Error listing proveedores:', error);
+    res.status(500).json({ error: 'Error al listar proveedores', details: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/proveedores/:id
+ * Get specific proveedor by ID
+ */
+app.get("/api/v1/proveedores/:id", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid proveedor ID' });
+    }
+
+    const proveedor = await proveedoresRepository.findById(id);
+    if (!proveedor) {
+      return res.status(404).json({ error: 'Proveedor not found' });
+    }
+
+    res.json(proveedor);
+  } catch (error: any) {
+    console.error('Error getting proveedor:', error);
+    res.status(500).json({ error: 'Error al obtener proveedor', details: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/proveedores/nif/:nif
+ * Get specific proveedor by NIF
+ */
+app.get("/api/v1/proveedores/nif/:nif", async (req: Request, res: Response) => {
+  try {
+    const nif = req.params.nif;
+    const proveedor = await proveedoresRepository.findByNif(nif);
+    
+    if (!proveedor) {
+      return res.status(404).json({ error: 'Proveedor not found' });
+    }
+
+    res.json(proveedor);
+  } catch (error: any) {
+    console.error('Error getting proveedor by NIF:', error);
+    res.status(500).json({ error: 'Error al obtener proveedor', details: error.message });
+  }
+});
+
+/**
+ * POST /api/v1/proveedores
+ * Create a new proveedor
+ */
+app.post("/api/v1/proveedores", async (req: Request, res: Response) => {
+  try {
+    const proveedorData: CreateProveedorParams = req.body;
+
+    // Validate required fields
+    if (!proveedorData.nif || !proveedorData.nombre_razon_social) {
+      return res.status(400).json({ error: 'NIF and nombre_razon_social are required' });
+    }
+
+    // Check if NIF already exists
+    const existing = await proveedoresRepository.findByNif(proveedorData.nif);
+    if (existing) {
+      return res.status(409).json({ error: 'Proveedor with this NIF already exists' });
+    }
+
+    const proveedor = await proveedoresRepository.create(proveedorData);
+    res.status(201).json(proveedor);
+  } catch (error: any) {
+    console.error('Error creating proveedor:', error);
+    res.status(500).json({ error: 'Error al crear proveedor', details: error.message });
+  }
+});
+
+/**
+ * PUT /api/v1/proveedores/:id
+ * Update an existing proveedor
+ */
+app.put("/api/v1/proveedores/:id", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid proveedor ID' });
+    }
+
+    const updateData: Partial<CreateProveedorParams> = req.body;
+    const proveedor = await proveedoresRepository.update(id, updateData);
+
+    if (!proveedor) {
+      return res.status(404).json({ error: 'Proveedor not found' });
+    }
+
+    res.json(proveedor);
+  } catch (error: any) {
+    console.error('Error updating proveedor:', error);
+    res.status(500).json({ error: 'Error al actualizar proveedor', details: error.message });
+  }
+});
+
+/**
+ * DELETE /api/v1/proveedores/:id
+ * Soft delete a proveedor
+ */
+app.delete("/api/v1/proveedores/:id", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid proveedor ID' });
+    }
+
+    const success = await proveedoresRepository.delete(id);
+    if (!success) {
+      return res.status(404).json({ error: 'Proveedor not found' });
+    }
+
+    res.json({ message: 'Proveedor deleted successfully' });
+  } catch (error: any) {
+    console.error('Error deleting proveedor:', error);
+    res.status(500).json({ error: 'Error al eliminar proveedor', details: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/proveedores/stats
+ * Get proveedores statistics
+ */
+app.get("/api/v1/proveedores/stats", async (req: Request, res: Response) => {
+  try {
+    const count = await proveedoresRepository.count();
+    res.json({ total: count });
+  } catch (error: any) {
+    console.error('Error getting proveedores stats:', error);
     res.status(500).json({ error: 'Error al obtener estadísticas', details: error.message });
   }
 });
