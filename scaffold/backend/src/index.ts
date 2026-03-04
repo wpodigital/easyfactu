@@ -108,11 +108,23 @@ app.get("/api/v1/invoices/:id", async (req: Request, res: Response) => {
 /**
  * POST /api/v1/invoices/:id/validate
  * Validate invoice with AEAT
+ * Accepts either numeric ID or series number (e.g., "TEST-001")
  */
 app.post("/api/v1/invoices/:id/validate", async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id, 10);
-    const factura = await facturasRepository.findById(id);
+    const idParam = req.params.id;
+    let factura;
+    
+    // Try numeric ID first
+    if (!isNaN(parseInt(idParam, 10))) {
+      factura = await facturasRepository.findById(parseInt(idParam, 10));
+    } else {
+      // Try to find by series number
+      // Format expected: "SERIES-NUMBER" or just "NUMBER"
+      const parts = idParam.split('-');
+      const series = parts.length > 1 ? parts[0] : '';
+      factura = await facturasRepository.findBySeriesAndNumber(series, idParam);
+    }
     
     if (!factura) {
       return res.status(404).json({ error: 'Invoice not found' });
@@ -122,8 +134,12 @@ app.post("/api/v1/invoices/:id/validate", async (req: Request, res: Response) =>
     const validationStatus = 'Correcto';
     const csv = `CSV-${Date.now()}`;
     
+    if (!factura.id) {
+      throw new Error('Invoice ID is required');
+    }
+    
     const updated = await facturasRepository.updateValidationStatus(
-      id,
+      factura.id,
       validationStatus,
       csv,
       undefined
@@ -274,7 +290,15 @@ app.get("/api/v1/invoices/:id/xml", async (req: Request, res: Response) => {
     }
     
     if (!factura.xml_content) {
-      return res.status(404).json({ error: 'XML content not available' });
+      return res.status(200).json({ 
+        message: 'XML content not yet generated',
+        hint: 'XML is generated after invoice validation with AEAT',
+        invoice: {
+          id: factura.id,
+          numSerie: factura.num_serie_factura,
+          status: factura.estado_registro
+        }
+      });
     }
     
     res.type('application/xml');
