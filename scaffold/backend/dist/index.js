@@ -6,6 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const database_1 = require("./config/database");
 const facturas_repository_1 = require("./repositories/facturas.repository");
+const clientes_repository_1 = require("./repositories/clientes.repository");
+const database_2 = require("./config/database");
+const clientesRepository = new clientes_repository_1.ClientesRepository(database_2.pool);
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 app.use(express_1.default.text({ type: "application/xml" }));
@@ -341,6 +344,162 @@ app.get("/records/:id/verify", (req, res) => {
         message: 'This endpoint has moved',
         newEndpoint: 'POST /api/v1/invoices/:id/validate',
     });
+});
+// ============================================================================
+// CLIENTES ENDPOINTS
+// ============================================================================
+/**
+ * GET /api/v1/clientes
+ * List all clients with pagination and search
+ */
+app.get("/api/v1/clientes", async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const search = req.query.search;
+        const activo = req.query.activo === 'true' ? true : req.query.activo === 'false' ? false : undefined;
+        const tipo_cliente = req.query.tipo_cliente;
+        const result = await clientesRepository.list({
+            page,
+            limit,
+            search,
+            activo,
+            tipo_cliente,
+        });
+        res.json({
+            clientes: result.clientes,
+            total: result.total,
+            page,
+            limit,
+            pages: Math.ceil(result.total / limit),
+        });
+    }
+    catch (error) {
+        console.error('Error listing clientes:', error);
+        res.status(500).json({ error: 'Error al listar clientes', details: error.message });
+    }
+});
+/**
+ * GET /api/v1/clientes/:id
+ * Get a specific client by ID
+ */
+app.get("/api/v1/clientes/:id", async (req, res) => {
+    try {
+        const id = parseInt(req.params.id, 10);
+        if (isNaN(id)) {
+            return res.status(400).json({ error: 'ID inválido' });
+        }
+        const cliente = await clientesRepository.findById(id);
+        if (!cliente) {
+            return res.status(404).json({ error: 'Cliente no encontrado' });
+        }
+        res.json(cliente);
+    }
+    catch (error) {
+        console.error('Error getting cliente:', error);
+        res.status(500).json({ error: 'Error al obtener cliente', details: error.message });
+    }
+});
+/**
+ * GET /api/v1/clientes/nif/:nif
+ * Get a client by NIF
+ */
+app.get("/api/v1/clientes/nif/:nif", async (req, res) => {
+    try {
+        const nif = req.params.nif;
+        const cliente = await clientesRepository.findByNif(nif);
+        if (!cliente) {
+            return res.status(404).json({ error: 'Cliente no encontrado' });
+        }
+        res.json(cliente);
+    }
+    catch (error) {
+        console.error('Error getting cliente by NIF:', error);
+        res.status(500).json({ error: 'Error al obtener cliente', details: error.message });
+    }
+});
+/**
+ * POST /api/v1/clientes
+ * Create a new client
+ */
+app.post("/api/v1/clientes", async (req, res) => {
+    try {
+        const clienteData = req.body;
+        // Validation
+        if (!clienteData.nif || !clienteData.nombre_razon_social) {
+            return res.status(400).json({
+                error: 'Datos incompletos. NIF y nombre son obligatorios'
+            });
+        }
+        // Check if NIF already exists
+        const existing = await clientesRepository.findByNif(clienteData.nif);
+        if (existing) {
+            return res.status(409).json({ error: 'Ya existe un cliente con ese NIF' });
+        }
+        const cliente = await clientesRepository.create(clienteData);
+        res.status(201).json(cliente);
+    }
+    catch (error) {
+        console.error('Error creating cliente:', error);
+        res.status(500).json({ error: 'Error al crear cliente', details: error.message });
+    }
+});
+/**
+ * PUT /api/v1/clientes/:id
+ * Update an existing client
+ */
+app.put("/api/v1/clientes/:id", async (req, res) => {
+    try {
+        const id = parseInt(req.params.id, 10);
+        if (isNaN(id)) {
+            return res.status(400).json({ error: 'ID inválido' });
+        }
+        const updateData = req.body;
+        const cliente = await clientesRepository.update(id, updateData);
+        if (!cliente) {
+            return res.status(404).json({ error: 'Cliente no encontrado' });
+        }
+        res.json(cliente);
+    }
+    catch (error) {
+        console.error('Error updating cliente:', error);
+        res.status(500).json({ error: 'Error al actualizar cliente', details: error.message });
+    }
+});
+/**
+ * DELETE /api/v1/clientes/:id
+ * Soft delete a client (set activo = false)
+ */
+app.delete("/api/v1/clientes/:id", async (req, res) => {
+    try {
+        const id = parseInt(req.params.id, 10);
+        if (isNaN(id)) {
+            return res.status(400).json({ error: 'ID inválido' });
+        }
+        const success = await clientesRepository.delete(id);
+        if (!success) {
+            return res.status(404).json({ error: 'Cliente no encontrado' });
+        }
+        res.json({ message: 'Cliente eliminado correctamente' });
+    }
+    catch (error) {
+        console.error('Error deleting cliente:', error);
+        res.status(500).json({ error: 'Error al eliminar cliente', details: error.message });
+    }
+});
+/**
+ * GET /api/v1/clientes/stats
+ * Get client statistics
+ */
+app.get("/api/v1/clientes/stats", async (req, res) => {
+    try {
+        const total = await clientesRepository.count();
+        res.json({ total });
+    }
+    catch (error) {
+        console.error('Error getting cliente stats:', error);
+        res.status(500).json({ error: 'Error al obtener estadísticas', details: error.message });
+    }
 });
 const PORT = process.env.PORT || 3000;
 // Initialize database and start server

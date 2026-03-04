@@ -49,5 +49,33 @@
     "fr": "Français",
     "de": "Deutsch",
     "select": "Seleccionar idioma"
+  },
+  "clientes": {
+    "title": "Clientes",
+    "subtitle": "Gestiona toda la información de tus clientes",
+    "addNew": "Nuevo Cliente",
+    "editClient": "Editar Cliente",
+    "search": "Buscar clientes...",
+    "noClientes": "No hay clientes todavía",
+    "confirmDelete": "¿Estás seguro de que quieres eliminar este cliente?",
+    "nif": "NIF/CIF",
+    "razonSocial": "Razón Social",
+    "nombreComercial": "Nombre Comercial",
+    "email": "Email",
+    "telefono": "Teléfono",
+    "movil": "Móvil",
+    "direccion": "Dirección",
+    "codigoPostal": "Código Postal",
+    "ciudad": "Ciudad",
+    "provincia": "Provincia",
+    "pais": "País"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "search": "Buscar",
+    "loading": "Cargando..."
   }
 }

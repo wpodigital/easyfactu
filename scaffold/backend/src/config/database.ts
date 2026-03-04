@@ -26,17 +26,17 @@ const dbConfig: PoolConfig = {
 /**
  * Global connection pool instance
  */
-let pool: Pool | null = null;
+let poolInstance: Pool | null = null;
 
 /**
  * Get or create the database connection pool
  */
 export function getPool(): Pool {
-  if (!pool) {
-    pool = new Pool(dbConfig);
+  if (!poolInstance) {
+    poolInstance = new Pool(dbConfig);
     
     // Handle pool errors
-    pool.on('error', (err) => {
+    poolInstance.on('error', (err) => {
       console.error('Unexpected error on idle client', err);
       process.exit(-1);
     });
@@ -45,16 +45,19 @@ export function getPool(): Pool {
     console.log(`Database pool created: ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
   }
   
-  return pool;
+  return poolInstance;
 }
+
+// Export pool for direct use (create it lazily)
+export const pool = getPool();
 
 /**
  * Close the database connection pool
  */
 export async function closePool(): Promise<void> {
-  if (pool) {
-    await pool.end();
-    pool = null;
+  if (poolInstance) {
+    await poolInstance.end();
+    poolInstance = null;
     console.log('Database pool closed');
   }
 }

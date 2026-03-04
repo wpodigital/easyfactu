@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { DashboardCard } from '../components/DashboardCard';
 import { 
   Users, 
@@ -13,13 +14,14 @@ import {
 
 export const Dashboard: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const sections = [
     {
       key: 'clientes',
       icon: Users,
       color: '#2d3e50',
-      onClick: () => console.log('Clientes clicked'),
+      onClick: () => navigate('/clientes'),
     },
     {
       key: 'proveedores',
