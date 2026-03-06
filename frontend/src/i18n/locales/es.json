@@ -1,0 +1,93 @@
+{
+  "app": {
+    "name": "EasyFactu",
+    "title": "Sistema de Facturación VeriFactu"
+  },
+  "dashboard": {
+    "title": "Panel de Control",
+    "sections": {
+      "clientes": {
+        "title": "Clientes",
+        "description": "Gestiona toda la información de tus clientes",
+        "subtitle": "Desde aquí podrás crear editar y gestionar fichas"
+      },
+      "proveedores": {
+        "title": "Proveedores",
+        "description": "Administra tus proveedores sus datos y documentos vinculados"
+      },
+      "facturas_emitidas": {
+        "title": "Facturas emitidas",
+        "description": "Consulta crea y gestiona las facturas que envías a tus clientes"
+      },
+      "facturas_recibidas": {
+        "title": "Facturas recibidas",
+        "description": "Lleva el registro de todas las facturas que recibes de tus proveedores"
+      },
+      "renta": {
+        "title": "Renta",
+        "description": "Accede a un resumen de tus ingresos gastos y cálculos relacionados con tu declaración de la renta"
+      },
+      "config": {
+        "title": "Configuración",
+        "description": "Personaliza la aplicación según tus necesidades"
+      },
+      "ayuda": {
+        "title": "Ayuda",
+        "description": "Respuestas a preguntas frecuentes y soporte para resolver dudas"
+      }
+    }
+  },
+  "theme": {
+    "light": "Claro",
+    "dark": "Oscuro",
+    "toggle": "Cambiar tema"
+  },
+  "language": {
+    "es": "Español",
+    "en": "English",
+    "pt": "Português",
+    "fr": "Français",
+    "de": "Deutsch",
+    "select": "Seleccionar idioma"
+  },
+  "clientes": {
+    "title": "Clientes",
+    "subtitle": "Gestiona toda la información de tus clientes",
+    "addNew": "Nuevo Cliente",
+    "editClient": "Editar Cliente",
+    "search": "Buscar clientes...",
+    "noClientes": "No hay clientes todavía",
+    "confirmDelete": "¿Estás seguro de que quieres eliminar este cliente?",
+    "nif": "NIF/CIF",
+    "razonSocial": "Razón Social",
+    "nombreComercial": "Nombre Comercial",
+    "email": "Email",
+    "telefono": "Teléfono",
+    "movil": "Móvil",
+    "direccion": "Dirección",
+    "codigoPostal": "Código Postal",
+    "ciudad": "Ciudad",
+    "provincia": "Provincia",
+    "pais": "País"
+  },
+  "nav": {
+    "dashboard": "Panel de Control",
+    "clientes": "Clientes",
+    "proveedores": "Proveedores",
+    "facturasEmitidas": "Facturas Emitidas",
+    "facturasRecibidas": "Facturas Recibidas",
+    "renta": "Declaración de Renta",
+    "configuracion": "Configuración",
+    "ayuda": "Ayuda"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "search": "Buscar",
+    "loading": "Cargando...",
+    "underConstruction": "Sección en Construcción",
+    "backToDashboard": "Volver al Panel de Control"
+  }
+}

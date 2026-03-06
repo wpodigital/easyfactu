@@ -1,0 +1,212 @@
+{
+  "info": {
+    "name": "EasyFactu API",
+    "description": "Collection of API requests for testing EasyFactu VeriFactu system",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Create Invoice - Simple",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"idVersion\": \"1.0\",\n  \"nombreRazonEmisor\": \"Mi Empresa S.L.\",\n  \"nifEmisor\": \"B12345678\",\n  \"numSerieFactura\": \"FAC-001\",\n  \"fechaExpedicionFactura\": \"2024-02-27\",\n  \"tipoFactura\": \"F1\",\n  \"cuotaTotal\": 21.00,\n  \"importeTotal\": 121.00,\n  \"descripcionOperacion\": \"Servicios de consultoría\",\n  \"tipoDesglose\": \"S\",\n  \"claveRegimen\": \"01\",\n  \"tipoImpositivo\": 21.00,\n  \"baseImponible\": 100.00,\n  \"cuotaRepercutida\": 21.00\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/invoices",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "invoices"]
+        }
+      }
+    },
+    {
+      "name": "Create Invoice - With Recipient",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"idVersion\": \"1.0\",\n  \"nombreRazonEmisor\": \"Mi Empresa S.L.\",\n  \"nifEmisor\": \"B12345678\",\n  \"numSerieFactura\": \"FAC-002\",\n  \"fechaExpedicionFactura\": \"2024-02-27\",\n  \"tipoFactura\": \"F1\",\n  \"cuotaTotal\": 42.00,\n  \"importeTotal\": 242.00,\n  \"descripcionOperacion\": \"Venta de productos\",\n  \"tipoDesglose\": \"S\",\n  \"claveRegimen\": \"01\",\n  \"tipoImpositivo\": 21.00,\n  \"baseImponible\": 200.00,\n  \"cuotaRepercutida\": 42.00,\n  \"destinatarios\": [\n    {\n      \"nombreRazon\": \"Cliente Ejemplo S.A.\",\n      \"nif\": \"B11111111\",\n      \"tipoIdentificacion\": \"N\",\n      \"codigoPais\": \"ES\"\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/invoices",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "invoices"]
+        }
+      }
+    },
+    {
+      "name": "Get Invoice by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/invoices/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "invoices", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "List All Invoices",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/invoices",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "invoices"]
+        }
+      }
+    },
+    {
+      "name": "List Invoices - Paginated",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/invoices?page=1&limit=10",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "invoices"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "List Invoices - Filter by Issuer",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/invoices?nifEmisor=B12345678",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "invoices"],
+          "query": [
+            {
+              "key": "nifEmisor",
+              "value": "B12345678"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Validate Invoice",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/invoices/:id/validate",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "invoices", ":id", "validate"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Invoice Status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/invoices/:id/status",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "invoices", ":id", "status"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Invoice XML",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/invoices/:id/xml",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "invoices", ":id", "xml"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete Invoice",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/invoices/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "invoices", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}

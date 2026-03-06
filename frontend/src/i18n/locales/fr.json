@@ -1,0 +1,67 @@
+{
+  "app": {
+    "name": "EasyFactu",
+    "title": "Système de Facturation VeriFactu"
+  },
+  "dashboard": {
+    "title": "Tableau de Bord",
+    "sections": {
+      "clientes": {
+        "title": "Clients",
+        "description": "Gérez toutes les informations de vos clients",
+        "subtitle": "Ici vous pouvez créer éditer et gérer des fiches"
+      },
+      "proveedores": {
+        "title": "Fournisseurs",
+        "description": "Administrez vos fournisseurs leurs données et documents liés"
+      },
+      "facturas_emitidas": {
+        "title": "Factures Émises",
+        "description": "Consultez créez et gérez les factures que vous envoyez à vos clients"
+      },
+      "facturas_recibidas": {
+        "title": "Factures Reçues",
+        "description": "Gardez une trace de toutes les factures que vous recevez de vos fournisseurs"
+      },
+      "renta": {
+        "title": "Déclaration",
+        "description": "Accédez à un résumé de vos revenus dépenses et calculs liés à votre déclaration fiscale"
+      },
+      "config": {
+        "title": "Configuration",
+        "description": "Personnalisez l'application selon vos besoins"
+      },
+      "ayuda": {
+        "title": "Aide",
+        "description": "Réponses aux questions fréquentes et support pour résoudre les doutes"
+      }
+    }
+  },
+  "theme": {
+    "light": "Clair",
+    "dark": "Sombre",
+    "toggle": "Changer le thème"
+  },
+  "language": {
+    "es": "Español",
+    "en": "English",
+    "pt": "Português",
+    "fr": "Français",
+    "de": "Deutsch",
+    "select": "Sélectionner la langue"
+  },
+  "nav": {
+    "dashboard": "Tableau de Bord",
+    "clientes": "Clients",
+    "proveedores": "Fournisseurs",
+    "facturasEmitidas": "Factures Émises",
+    "facturasRecibidas": "Factures Reçues",
+    "renta": "Déclaration de Revenus",
+    "configuracion": "Configuration",
+    "ayuda": "Aide"
+  },
+  "common": {
+    "underConstruction": "En Construction",
+    "backToDashboard": "Retour au Tableau de Bord"
+  }
+}
