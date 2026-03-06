@@ -88,16 +88,27 @@ El comando `\q` te devuelve a PowerShell (el prompt vuelve a mostrar `PS C:\...>
 # Esto lo escribes en PowerShell, NO dentro de psql.
 # El prompt muestra:  PS C:\Users\HP\Dev\GitHub\easyfactu>
 
-psql -U easyfactu -d easyfactu -f migrations/20251122_create_invoice_declarations_queries.sql
+psql -U postgres -d easyfactu -f migrations/20251122_create_invoice_declarations_queries.sql
 ```
+
+Las migraciones se ejecutan con el usuario `postgres` (superusuario) para que el `ALTER TABLE ... OWNER TO easyfactu` que incluye el script funcione correctamente.
 
 Deberías ver:
 
 ```
 CREATE TABLE
+ALTER TABLE
 CREATE INDEX
 CREATE INDEX
 ```
+
+> **¿Ves `debe ser dueño de la tabla` al intentar crear los índices?**
+> La tabla fue creada anteriormente por el superusuario `postgres` y `easyfactu`
+> no puede modificarla. Corrígelo en una sola línea desde PowerShell:
+> ```powershell
+> psql -U postgres -d easyfactu -c "ALTER TABLE invoice_declarations_queries OWNER TO easyfactu;"
+> ```
+> Después vuelve a ejecutar la migración y los índices se crearán sin errores.
 
 > **Error frecuente en Windows:** si ejecutas el comando `psql -f` estando
 > dentro del prompt de psql (`postgres=#`), psql lo interpreta como un comando
@@ -107,7 +118,7 @@ CREATE INDEX
 > añade la carpeta `bin` de PostgreSQL a las variables de entorno del sistema,
 > por ejemplo `C:\Program Files\PostgreSQL\16\bin`, o usa la ruta completa:
 > ```powershell
-> & "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U easyfactu -d easyfactu -f migrations/20251122_create_invoice_declarations_queries.sql
+> & "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U postgres -d easyfactu -f migrations/20251122_create_invoice_declarations_queries.sql
 > ```
 
 > **Advertencia de código de página en Windows** (`El código de página de la

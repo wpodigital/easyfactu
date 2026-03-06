@@ -9,5 +9,10 @@ CREATE TABLE IF NOT EXISTS invoice_declarations_queries (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
+-- Ensure the application user owns the table so it can create indexes and modify
+-- the schema later. This is a no-op when the table was already created by the
+-- correct owner, and corrects ownership when the table was created by a superuser.
+ALTER TABLE invoice_declarations_queries OWNER TO easyfactu;
+
 CREATE INDEX IF NOT EXISTS idx_invoice_declarations_queries_org ON invoice_declarations_queries(organization_id);
 CREATE INDEX IF NOT EXISTS idx_invoice_declarations_queries_status ON invoice_declarations_queries(status);
