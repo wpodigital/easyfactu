@@ -51,26 +51,63 @@ git pull
 
 ## Paso 2 — Crear la base de datos en PostgreSQL
 
-Abre una terminal y ejecuta los siguientes comandos **una sola vez**:
+> ⚠️ **Importante:** los pasos 2a y 2b se ejecutan en **sitios diferentes**.
+> Fíjate bien en el indicador del prompt antes de escribir cada comando.
+
+### 2a — Dentro de PowerShell (o CMD): conectarte a PostgreSQL
+
+```powershell
+# Esto lo escribes en PowerShell. El prompt muestra algo como:
+# PS C:\Users\HP\Dev\GitHub\easyfactu>
+
+psql -U postgres
+```
+
+Te pedirá la contraseña del usuario `postgres`. Al entrar, el prompt
+cambia a `postgres=#` — **ahora estás dentro de psql**, no en PowerShell.
+
+### 2b — Dentro del prompt de psql (`postgres=#`): crear usuario y base de datos
 
 ```sql
--- Conéctate a PostgreSQL como superusuario
-psql -U postgres
-
--- Dentro del prompt de psql:
+-- El prompt muestra:  postgres=#
 CREATE USER easyfactu WITH PASSWORD 'easyfactu';
 CREATE DATABASE easyfactu OWNER easyfactu;
 \q
 ```
 
-Luego aplica la migración para crear las tablas:
+El comando `\q` te devuelve a PowerShell (el prompt vuelve a mostrar `PS C:\...>`).
 
-```bash
+### 2c — De vuelta en PowerShell: aplicar la migración
+
+```powershell
+# Esto lo escribes en PowerShell, NO dentro de psql.
+# El prompt muestra:  PS C:\Users\HP\Dev\GitHub\easyfactu>
+
 psql -U easyfactu -d easyfactu -f migrations/20251122_create_invoice_declarations_queries.sql
 ```
 
-> **Nota:** si PostgreSQL no está en el PATH en Windows, añade su carpeta `bin` a las variables de entorno,
-> por ejemplo `C:\Program Files\PostgreSQL\16\bin`.
+Deberías ver:
+
+```
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+```
+
+> **Error frecuente en Windows:** si ejecutas el comando `psql -f` estando
+> dentro del prompt de psql (`postgres=#`), psql lo interpreta como un comando
+> SQL desconocido y no hace nada. **Siempre ejecuta `psql -f` desde PowerShell.**
+
+> **PostgreSQL no está en el PATH:** si PowerShell dice *«psql no se reconoce»*,
+> añade la carpeta `bin` de PostgreSQL a las variables de entorno del sistema,
+> por ejemplo `C:\Program Files\PostgreSQL\16\bin`, o usa la ruta completa:
+> ```powershell
+> & "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U easyfactu -d easyfactu -f migrations/20251122_create_invoice_declarations_queries.sql
+> ```
+
+> **Advertencia de código de página en Windows** (`El código de página de la
+> consola (850) difiere…`): es solo un aviso informativo, no afecta al
+> funcionamiento. Puedes ignorarlo.
 
 ---
 
