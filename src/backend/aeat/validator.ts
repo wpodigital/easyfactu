@@ -18,7 +18,7 @@ export function validateXmlAgainstXsd(xmlString: string): { valid: boolean; erro
   try {
     const xmlDoc = libxmljs.parseXml(xmlString);
     const valid = xmlDoc.validate(schema);
-    const errors = (xmlDoc.validationErrors || []).map(e => e.message.trim());
+    const errors = (xmlDoc.validationErrors || []).map((e: { message: string }) => e.message.trim());
     return { valid: !!valid, errors };
   } catch (err) {
     return { valid: false, errors: [(err as Error).message] };
@@ -27,14 +27,15 @@ export function validateXmlAgainstXsd(xmlString: string): { valid: boolean; erro
 
 export function parseInvoiceDeclarationXml(xmlString: string): InvoiceDeclarationResult[] {
   const xmlDoc = libxmljs.parseXml(xmlString);
-  const root = xmlDoc.get('//servicioConsultasDirectas');
+  const root = xmlDoc.get('//servicioConsultasDirectas') as libxmljs.Element | null;
   if (!root) return [];
   const results: InvoiceDeclarationResult[] = [];
-  const respuestas = root.find('.//respuestaCorrecta');
-  respuestas.forEach(node => {
+  const respuestas = (root as libxmljs.Element).find('.//respuestaCorrecta');
+  respuestas.forEach((node: libxmljs.Node) => {
+    const el = node as libxmljs.Element;
     const getText = (name: string) => {
-      const el = node.get(name);
-      return el ? el.text().trim() : '';
+      const child = el.get(name) as libxmljs.Element | null;
+      return child ? child.text().trim() : '';
     };
     const item: InvoiceDeclarationResult = {
       ejercicio: getText('ejercicio'),

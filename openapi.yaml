@@ -67,3 +67,107 @@ paths:
                     type: array
                     items:
                       type: string
+  /aeat/queries:
+    post:
+      summary: Store an AEAT XML query/response for audit
+      description: >
+        Accepts a raw XML body from an AEAT service response, parses it, and
+        persists an audit record in the invoice_declarations_queries table.
+      parameters:
+        - name: x-organization-id
+          in: header
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Optional organisation identifier to tag the record
+      requestBody:
+        required: true
+        content:
+          application/xml:
+            schema:
+              type: string
+      responses:
+        '201':
+          description: Audit record created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AeatQuery'
+        '400':
+          description: Missing or empty request body
+        '503':
+          description: Database unavailable
+    get:
+      summary: List stored AEAT audit records
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of audit records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AeatQuery'
+        '503':
+          description: Database unavailable
+  /aeat/queries/{id}:
+    get:
+      summary: Get a single AEAT audit record by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Audit record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AeatQuery'
+        '400':
+          description: Invalid id
+        '404':
+          description: Record not found
+        '503':
+          description: Database unavailable
+components:
+  schemas:
+    AeatQuery:
+      type: object
+      properties:
+        id:
+          type: integer
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        xml_raw:
+          type: string
+        parsed_count:
+          type: integer
+        status:
+          type: string
+          enum: [success, error, pending]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
