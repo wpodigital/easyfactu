@@ -1,7 +1,16 @@
 # System Verification Script for Windows (PowerShell)
 # ====================================================
 # Este script verifica que todo el sistema EasyFactu esté correctamente configurado
-# Usage: .\verificar.ps1
+# Usage: .\verificar.ps1 (desde cualquier directorio)
+
+# Get the repository root (where this script is located)
+$RepoRoot = $PSScriptRoot
+if (-not $RepoRoot) {
+    $RepoRoot = Get-Location
+}
+
+# Change to repo root to ensure all paths work correctly
+Push-Location $RepoRoot
 
 # Colors for output
 function Write-Success { Write-Host $args -ForegroundColor Green }
@@ -63,6 +72,9 @@ function Check-Item {
 Write-Info "================================================"
 Write-Info "  EasyFactu - System Verification (Windows)"
 Write-Info "================================================"
+Write-Info ""
+Write-Info "Ejecutando verificación desde: $RepoRoot"
+Write-Info ""
 
 # 1. Check Git
 Check-Item -Description "Git instalado" -Test {
@@ -322,5 +334,8 @@ if ($checksFailed -gt 0) {
     Write-Host "  2. Prueba la API: cd scaffold\backend && .\scripts\test-api.ps1"
 }
 Write-Host ""
+
+# Return to original directory
+Pop-Location
 
 exit $checksFailed
