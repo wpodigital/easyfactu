@@ -72,8 +72,13 @@ cambia a `postgres=#` — **ahora estás dentro de psql**, no en PowerShell.
 -- El prompt muestra:  postgres=#
 CREATE USER easyfactu WITH PASSWORD 'easyfactu';
 CREATE DATABASE easyfactu OWNER easyfactu;
+\c easyfactu
+GRANT ALL ON SCHEMA public TO easyfactu;
 \q
 ```
+
+- `\c easyfactu` cambia la conexión activa a la base de datos recién creada.
+- `GRANT ALL ON SCHEMA public TO easyfactu` es necesario en **PostgreSQL 15 y superior**: a partir de esa versión el esquema `public` ya no concede el permiso `CREATE` a todos los usuarios automáticamente. Sin este paso verás el error `permiso denegado al esquema public` al aplicar las migraciones.
 
 El comando `\q` te devuelve a PowerShell (el prompt vuelve a mostrar `PS C:\...>`).
 
