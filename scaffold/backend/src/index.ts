@@ -3,11 +3,16 @@ import { testConnection, initializeDatabase, closePool } from "./config/database
 import { facturasRepository, CreateFacturaParams } from "./repositories/facturas.repository";
 import { ClientesRepository, CreateClienteParams, UpdateClienteParams } from "./repositories/clientes.repository";
 import { proveedoresRepository, CreateProveedorParams } from "./repositories/proveedores.repository";
+import { facturasRecibidasRepository } from "./repositories/facturas_recibidas.repository";
+import { configuracionRepository } from "./repositories/configuracion.repository";
+import { certificadosRepository } from "./repositories/certificados.repository";
+import multer from "multer";
 import { pool } from "./config/database";
 
 const clientesRepository = new ClientesRepository(pool);
 
 const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
 app.use(express.json());
 app.use(express.text({ type: "application/xml" }));
 
@@ -773,6 +778,296 @@ process.on('SIGINT', async () => {
   console.log('SIGINT signal received: closing HTTP server');
   await closePool();
   process.exit(0);
+});
+
+// ===================================================================
+// Facturas Recibidas Endpoints
+// ===================================================================
+
+// Listar facturas recibidas
+app.get("/api/v1/facturas-recibidas", async (req: Request, res: Response) => {
+  try {
+    const facturas = await facturasRecibidasRepository.findAll();
+    res.json(facturas);
+  } catch (error: any) {
+    res.status(500).json({
+      error: "Error al obtener facturas recibidas",
+      details: error.message
+    });
+  }
+});
+
+// Crear factura recibida
+app.post("/api/v1/facturas-recibidas", async (req: Request, res: Response) => {
+  try {
+    const factura = await facturasRecibidasRepository.create(req.body);
+    res.status(201).json(factura);
+  } catch (error: any) {
+    res.status(500).json({
+      error: "Error al crear factura recibida",
+      details: error.message
+    });
+  }
+});
+
+// Marcar como pagada
+app.post("/api/v1/facturas-recibidas/:id/pagar", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+
+    const factura = await facturasRecibidasRepository.markAsPaid(
+      id,
+      new Date()
+    );
+
+    res.json(factura);
+  } catch (error: any) {
+    res.status(500).json({
+      error: "Error al marcar factura como pagada",
+      details: error.message
+    });
+  }
+});
+
+// Marcar como pagada
+app.post("/api/v1/facturas-recibidas/:id/pagar", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+
+    const factura = await facturasRecibidasRepository.markAsPaid(
+      id,
+      new Date()
+    );
+
+    res.json(factura);
+  } catch (error: any) {
+    res.status(500).json({
+      error: "Error al marcar factura como pagada",
+      details: error.message
+    });
+  }
+});
+
+// Eliminar factura
+app.delete("/api/v1/facturas-recibidas/:id", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    await facturasRecibidasRepository.delete(id);
+
+    res.json({ message: "Factura eliminada" });
+  } catch (error: any) {
+    res.status(500).json({
+      error: "Error al eliminar factura",
+      details: error.message
+    });
+  }
+});
+
+// ===================================================================
+// Configuración Endpoints
+// ===================================================================
+
+/**
+ * GET /api/v1/configuracion
+ * Obtener toda la configuración, opcionalmente filtrada por tipo
+ */
+app.get("/api/v1/configuracion", async (req: Request, res: Response) => {
+  try {
+    const tipo = req.query.tipo as string | undefined;
+
+    if (tipo) {
+      const config = await configuracionRepository.getAll(tipo);
+      return res.json(config);
+    }
+
+    const grouped = await configuracionRepository.getGrouped();
+    res.json(grouped);
+  } catch (error: any) {
+    console.error("Error getting configuracion:", error);
+    res.status(500).json({
+      error: "Error al obtener configuración",
+      details: error.message,
+    });
+  }
+});
+
+/**
+ * PUT /api/v1/configuracion
+ * Actualizar múltiples claves de configuración
+ */
+app.put("/api/v1/configuracion", async (req: Request, res: Response) => {
+  try {
+    const configuraciones = req.body;
+
+    if (!configuraciones || typeof configuraciones !== "object") {
+      return res.status(400).json({
+        error: "Body inválido. Debe ser un objeto clave-valor",
+      });
+    }
+
+    const updates = Object.entries(configuraciones).map(([clave, valor]) =>
+      configuracionRepository.set(clave, String(valor ?? ""))
+    );
+
+    const result = await Promise.all(updates);
+
+    res.json({
+      success: true,
+      updated: result.length,
+      configuraciones: result,
+    });
+  } catch (error: any) {
+    console.error("Error updating configuracion:", error);
+    res.status(500).json({
+      error: "Error al actualizar configuración",
+      details: error.message,
+    });
+  }
+});
+
+// ===================================================================
+// Certificados Endpoints
+// ===================================================================
+
+/**
+ * GET /api/v1/certificados
+ * Lista todos los certificados
+ */
+app.get("/api/v1/certificados", async (req: Request, res: Response) => {
+  try {
+    const certificados = await certificadosRepository.findAll();
+    res.json(certificados);
+  } catch (error: any) {
+    console.error("Error listing certificados:", error);
+    res.status(500).json({
+      error: "Error al listar certificados",
+      details: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/v1/certificados/:id
+ * Obtiene un certificado por ID
+ */
+app.get("/api/v1/certificados/:id", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID inválido" });
+    }
+
+    const certificado = await certificadosRepository.findById(id);
+
+    if (!certificado) {
+      return res.status(404).json({ error: "Certificado no encontrado" });
+    }
+
+    res.json(certificado);
+  } catch (error: any) {
+    console.error("Error getting certificado:", error);
+    res.status(500).json({
+      error: "Error al obtener certificado",
+      details: error.message,
+    });
+  }
+});
+
+/**
+ * POST /api/v1/certificados
+ * Sube un certificado .p12
+ */
+app.post(
+  "/api/v1/certificados",
+  upload.single("file"),
+  async (req: Request, res: Response) => {
+    try {
+      const file = req.file;
+      const { password, titular_nif, nombre } = req.body;
+
+      if (!file) {
+        return res.status(400).json({ error: "Archivo no enviado" });
+      }
+
+      if (!password || !titular_nif) {
+        return res.status(400).json({
+          error: "password y titular_nif son obligatorios",
+        });
+      }
+
+      const certificado = await certificadosRepository.create(
+        file.buffer,
+        password,
+        titular_nif,
+        nombre
+      );
+
+      res.status(201).json(certificado);
+    } catch (error: any) {
+      console.error("Error creating certificado:", error);
+      res.status(500).json({
+        error: "Error al subir certificado",
+        details: error.message,
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/v1/certificados/:id/activar
+ * Activa un certificado
+ */
+app.post("/api/v1/certificados/:id/activar", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID inválido" });
+    }
+
+    const certificado = await certificadosRepository.activate(id);
+
+    if (!certificado) {
+      return res.status(404).json({ error: "Certificado no encontrado" });
+    }
+
+    res.json(certificado);
+  } catch (error: any) {
+    console.error("Error activating certificado:", error);
+    res.status(500).json({
+      error: "Error al activar certificado",
+      details: error.message,
+    });
+  }
+});
+
+/**
+ * DELETE /api/v1/certificados/:id
+ * Elimina un certificado
+ */
+app.delete("/api/v1/certificados/:id", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID inválido" });
+    }
+
+    const success = await certificadosRepository.delete(id);
+
+    if (!success) {
+      return res.status(404).json({ error: "Certificado no encontrado" });
+    }
+
+    res.json({ message: "Certificado eliminado correctamente" });
+  } catch (error: any) {
+    console.error("Error deleting certificado:", error);
+    res.status(500).json({
+      error: "Error al eliminar certificado",
+      details: error.message,
+    });
+  }
 });
 
 startServer();
