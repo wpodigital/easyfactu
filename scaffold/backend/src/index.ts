@@ -811,19 +811,35 @@ app.post("/api/v1/facturas-recibidas", async (req: Request, res: Response) => {
 });
 
 // Marcar como pagada
-app.post("/api/v1/facturas-recibidas/:id/pagar", async (req: Request, res: Response) => {
+// Obtener factura por ID
+app.get("/api/v1/facturas-recibidas/:id", async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
-
-    const factura = await facturasRecibidasRepository.markAsPaid(
-      id,
-      new Date()
-    );
-
+    const factura = await facturasRecibidasRepository.findById(id);
+    if (!factura) {
+      return res.status(404).json({ error: "Factura no encontrada" });
+    }
     res.json(factura);
   } catch (error: any) {
     res.status(500).json({
-      error: "Error al marcar factura como pagada",
+      error: "Error al obtener factura recibida",
+      details: error.message
+    });
+  }
+});
+
+// Actualizar factura recibida
+app.put("/api/v1/facturas-recibidas/:id", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    const factura = await facturasRecibidasRepository.update(id, req.body);
+    if (!factura) {
+      return res.status(404).json({ error: "Factura no encontrada" });
+    }
+    res.json(factura);
+  } catch (error: any) {
+    res.status(500).json({
+      error: "Error al actualizar factura recibida",
       details: error.message
     });
   }

@@ -84,6 +84,39 @@ export const facturasRecibidasRepository = {
     return result.rows[0];
   },
 
+  async update(id: number, data: Partial<FacturaRecibida>) {
+    const fields: string[] = [];
+    const values: any[] = [];
+    let idx = 1;
+
+    const updatable = [
+      'numero_factura', 'proveedor_id', 'fecha_factura', 'fecha_vencimiento',
+      'base_imponible', 'iva_total', 'importe_total', 'estado', 'notas'
+    ];
+
+    for (const field of updatable) {
+      if (data[field] !== undefined) {
+        fields.push(`${field} = $${idx++}`);
+        values.push(data[field]);
+      }
+    }
+
+    if (fields.length === 0) return this.findById(id);
+
+    fields.push(`updated_at = NOW()`);
+    values.push(id);
+
+    const query = `
+      UPDATE facturas_recibidas
+      SET ${fields.join(', ')}
+      WHERE id = $${idx}
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, values);
+    return result.rows[0];
+  },
+
   async delete(id: number) {
     const result = await pool.query(
       'DELETE FROM facturas_recibidas WHERE id = $1',
