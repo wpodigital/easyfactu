@@ -86,10 +86,10 @@ export const facturasRecibidasRepository = {
 
   async update(id: number, data: Partial<FacturaRecibida>) {
     const fields: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     let idx = 1;
 
-    const updatable = [
+    const updatable: Array<keyof FacturaRecibida> = [
       'numero_factura', 'proveedor_id', 'fecha_factura', 'fecha_vencimiento',
       'base_imponible', 'iva_total', 'importe_total', 'estado', 'notas'
     ];
