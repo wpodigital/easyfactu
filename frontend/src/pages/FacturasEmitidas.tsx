@@ -168,8 +168,13 @@ export default function FacturasEmitidas() {
         ) : filteredFacturas.length === 0 ? (
           <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
             <FileText className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-4 text-gray-600 dark:text-gray-400">
-              {searchTerm ? t('facturasEmitidas.noResults', 'No se encontraron facturas') : t('facturasEmitidas.empty', 'No hay facturas')}
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              {searchTerm ? t('facturasEmitidas.noResults', 'No se encontraron facturas') : t('facturasEmitidas.empty', 'No hay facturas emitidas')}
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400">
+                {searchTerm
+                  ? 'Prueba con otros términos de búsqueda'
+                  : 'Emite tu primera factura'}
             </p>
           </div>
         ) : (
