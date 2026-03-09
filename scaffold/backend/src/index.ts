@@ -199,6 +199,102 @@ app.get("/api/v1/auth/me", authRateLimiter, requireAuth, async (req: Request, re
 // ─────────────────────────────────────────────
 app.use("/api/v1/", requireAuth);
 
+// ─────────────────────────────────────────────
+// User management endpoints (admin only)
+// ─────────────────────────────────────────────
+
+/**
+ * GET /api/v1/usuarios
+ * List all users (admin only).
+ */
+app.get("/api/v1/usuarios", async (req: Request, res: Response) => {
+  try {
+    if (req.user!.rol !== "admin") return res.status(403).json({ error: "Acceso denegado." });
+    const users = await usuariosRepository.findAll();
+    res.json({ users });
+  } catch (error: any) {
+    res.status(500).json({ error: "Error interno del servidor.", details: error.message });
+  }
+});
+
+/**
+ * POST /api/v1/usuarios
+ * Create a new user (admin only).
+ */
+app.post("/api/v1/usuarios", async (req: Request, res: Response) => {
+  try {
+    if (req.user!.rol !== "admin") return res.status(403).json({ error: "Acceso denegado." });
+    const { nombre, email, password, rol } = req.body as { nombre?: string; email?: string; password?: string; rol?: string };
+    if (!nombre || !email || !password) {
+      return res.status(400).json({ error: "nombre, email y contraseña son obligatorios." });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ error: "La contraseña debe tener al menos 8 caracteres." });
+    }
+    const user = await usuariosRepository.create({ nombre, email, password, rol: rol || "admin" });
+    res.status(201).json({ user });
+  } catch (error: any) {
+    if (error.code === "23505") {
+      return res.status(409).json({ error: "Este email ya está registrado." });
+    }
+    res.status(500).json({ error: "Error interno del servidor.", details: error.message });
+  }
+});
+
+/**
+ * PUT /api/v1/usuarios/:id
+ * Update a user (admin only, or own account for password change).
+ */
+app.put("/api/v1/usuarios/:id", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const isAdmin = req.user!.rol === "admin";
+    const isOwnAccount = req.user!.userId === id;
+    if (!isAdmin && !isOwnAccount) return res.status(403).json({ error: "Acceso denegado." });
+
+    const { nombre, email, password, rol, activo } = req.body as {
+      nombre?: string; email?: string; password?: string; rol?: string; activo?: boolean;
+    };
+
+    // Non-admins can only change their own password
+    const params = isAdmin
+      ? { nombre, email, password, rol, activo }
+      : { password };
+
+    if (password && password.length < 8) {
+      return res.status(400).json({ error: "La contraseña debe tener al menos 8 caracteres." });
+    }
+
+    const user = await usuariosRepository.update(id, params);
+    if (!user) return res.status(404).json({ error: "Usuario no encontrado." });
+    res.json({ user });
+  } catch (error: any) {
+    if (error.code === "23505") {
+      return res.status(409).json({ error: "Este email ya está registrado." });
+    }
+    res.status(500).json({ error: "Error interno del servidor.", details: error.message });
+  }
+});
+
+/**
+ * DELETE /api/v1/usuarios/:id
+ * Delete a user (admin only, cannot delete own account).
+ */
+app.delete("/api/v1/usuarios/:id", async (req: Request, res: Response) => {
+  try {
+    if (req.user!.rol !== "admin") return res.status(403).json({ error: "Acceso denegado." });
+    const id = parseInt(req.params.id, 10);
+    if (req.user!.userId === id) {
+      return res.status(400).json({ error: "No puedes eliminar tu propio usuario." });
+    }
+    const deleted = await usuariosRepository.delete(id);
+    if (!deleted) return res.status(404).json({ error: "Usuario no encontrado." });
+    res.json({ ok: true });
+  } catch (error: any) {
+    res.status(500).json({ error: "Error interno del servidor.", details: error.message });
+  }
+});
+
 /**
  * POST /api/v1/invoices
  * Create a new invoice (Alta - Registration)

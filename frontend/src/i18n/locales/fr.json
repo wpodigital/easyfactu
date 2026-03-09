@@ -297,5 +297,41 @@
     "errorConnection": "Impossible de se connecter au serveur.",
     "firstRunTitle": "Bienvenue sur EasyFactu",
     "firstRunSubtitle": "Aucun utilisateur enregistré pour l'instant. Remplissez le formulaire pour créer le premier administrateur."
+  },
+  "usuarios": {
+    "title": "Gestion des utilisateurs",
+    "subtitle": "Gérez les comptes d'accès à l'application.",
+    "createBtn": "Nouvel utilisateur",
+    "table": {
+      "nombre": "Nom",
+      "email": "Email",
+      "rol": "Rôle",
+      "activo": "Actif",
+      "ultimoAcceso": "Dernier accès",
+      "acciones": "Actions"
+    },
+    "modal": {
+      "createTitle": "Créer un utilisateur",
+      "editTitle": "Modifier l'utilisateur",
+      "nombre": "Nom complet",
+      "email": "Adresse e-mail",
+      "password": "Mot de passe",
+      "passwordEdit": "Nouveau mot de passe (laisser vide pour ne pas changer)",
+      "rol": "Rôle",
+      "rolAdmin": "Administrateur",
+      "rolViewer": "Lecture seule",
+      "activo": "Utilisateur actif",
+      "passwordHint": "8 caractères minimum"
+    },
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer l'utilisateur «{name}» ? Cette action est irréversible.",
+    "neverAccessed": "Jamais",
+    "noUsers": "Aucun utilisateur enregistré.",
+    "ownAccountNote": "Votre propre compte ne peut pas être supprimé.",
+    "loading": "Chargement des utilisateurs...",
+    "deleteTitle": "Supprimer l'utilisateur",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "saving": "Enregistrement...",
+    "saveChanges": "Enregistrer les modifications"
   }
 }

@@ -297,5 +297,41 @@
     "errorConnection": "Não foi possível conectar ao servidor.",
     "firstRunTitle": "Bem-vindo ao EasyFactu",
     "firstRunSubtitle": "Nenhum utilizador registado ainda. Preencha o formulário para criar o primeiro administrador."
+  },
+  "usuarios": {
+    "title": "Gestão de utilizadores",
+    "subtitle": "Gere as contas de acesso à aplicação.",
+    "createBtn": "Novo utilizador",
+    "table": {
+      "nombre": "Nome",
+      "email": "Email",
+      "rol": "Função",
+      "activo": "Ativo",
+      "ultimoAcceso": "Último acesso",
+      "acciones": "Ações"
+    },
+    "modal": {
+      "createTitle": "Criar utilizador",
+      "editTitle": "Editar utilizador",
+      "nombre": "Nome completo",
+      "email": "Endereço de email",
+      "password": "Palavra-passe",
+      "passwordEdit": "Nova palavra-passe (deixar em branco para manter)",
+      "rol": "Função",
+      "rolAdmin": "Administrador",
+      "rolViewer": "Só leitura",
+      "activo": "Utilizador ativo",
+      "passwordHint": "Mínimo 8 caracteres"
+    },
+    "deleteConfirm": "Tem a certeza de que quer eliminar o utilizador «{name}»? Esta ação não pode ser desfeita.",
+    "neverAccessed": "Nunca",
+    "noUsers": "Nenhum utilizador registado.",
+    "ownAccountNote": "A sua própria conta não pode ser eliminada.",
+    "loading": "A carregar utilizadores...",
+    "deleteTitle": "Eliminar utilizador",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "saving": "A guardar...",
+    "saveChanges": "Guardar alterações"
   }
 }

@@ -297,5 +297,41 @@
     "errorConnection": "Verbindung zum Server konnte nicht hergestellt werden.",
     "firstRunTitle": "Willkommen bei EasyFactu",
     "firstRunSubtitle": "Noch keine Benutzer registriert. Fülle das Formular aus, um den ersten Administrator zu erstellen."
+  },
+  "usuarios": {
+    "title": "Benutzerverwaltung",
+    "subtitle": "Verwalte die Zugriffskonten der Anwendung.",
+    "createBtn": "Neuer Benutzer",
+    "table": {
+      "nombre": "Name",
+      "email": "E-Mail",
+      "rol": "Rolle",
+      "activo": "Aktiv",
+      "ultimoAcceso": "Letzter Zugriff",
+      "acciones": "Aktionen"
+    },
+    "modal": {
+      "createTitle": "Benutzer erstellen",
+      "editTitle": "Benutzer bearbeiten",
+      "nombre": "Vollständiger Name",
+      "email": "E-Mail-Adresse",
+      "password": "Passwort",
+      "passwordEdit": "Neues Passwort (leer lassen, um es nicht zu ändern)",
+      "rol": "Rolle",
+      "rolAdmin": "Administrator",
+      "rolViewer": "Nur lesen",
+      "activo": "Aktiver Benutzer",
+      "passwordHint": "Mindestens 8 Zeichen"
+    },
+    "deleteConfirm": "Bist du sicher, dass du den Benutzer «{name}» löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "neverAccessed": "Nie",
+    "noUsers": "Keine Benutzer registriert.",
+    "ownAccountNote": "Dein eigenes Konto kann nicht gelöscht werden.",
+    "loading": "Benutzer werden geladen...",
+    "deleteTitle": "Benutzer löschen",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "saving": "Speichert...",
+    "saveChanges": "Änderungen speichern"
   }
 }

@@ -19,6 +19,14 @@ export interface CreateUsuarioParams {
   rol?: string;
 }
 
+export interface UpdateUsuarioParams {
+  nombre?: string;
+  email?: string;
+  password?: string;
+  rol?: string;
+  activo?: boolean;
+}
+
 const SALT_ROUNDS = 12;
 
 class UsuariosRepository {
@@ -26,6 +34,14 @@ class UsuariosRepository {
 
   constructor(poolInstance: Pool) {
     this.pool = poolInstance;
+  }
+
+  async findAll(): Promise<Usuario[]> {
+    const result = await this.pool.query(
+      `SELECT id, nombre, email, rol, activo, ultimo_acceso, created_at
+       FROM usuarios ORDER BY created_at ASC`
+    );
+    return result.rows;
   }
 
   async findByEmail(email: string): Promise<(Usuario & { password_hash: string }) | null> {
@@ -60,6 +76,40 @@ class UsuariosRepository {
       ]
     );
     return result.rows[0];
+  }
+
+  async update(id: number, params: UpdateUsuarioParams): Promise<Usuario | null> {
+    const sets: string[] = [];
+    const values: unknown[] = [];
+    let idx = 1;
+
+    if (params.nombre !== undefined) { sets.push(`nombre = $${idx++}`); values.push(params.nombre.trim()); }
+    if (params.email !== undefined)  { sets.push(`email = $${idx++}`);  values.push(params.email.toLowerCase().trim()); }
+    if (params.rol !== undefined)    { sets.push(`rol = $${idx++}`);    values.push(params.rol); }
+    if (params.activo !== undefined) { sets.push(`activo = $${idx++}`); values.push(params.activo); }
+    if (params.password !== undefined) {
+      const hash = await bcrypt.hash(params.password, SALT_ROUNDS);
+      sets.push(`password_hash = $${idx++}`);
+      values.push(hash);
+    }
+
+    if (sets.length === 0) return this.findById(id);
+
+    values.push(id);
+    const result = await this.pool.query(
+      `UPDATE usuarios SET ${sets.join(", ")} WHERE id = $${idx}
+       RETURNING id, nombre, email, rol, activo, ultimo_acceso, created_at`,
+      values
+    );
+    return result.rows[0] || null;
+  }
+
+  async delete(id: number): Promise<boolean> {
+    const result = await this.pool.query(
+      `DELETE FROM usuarios WHERE id = $1`,
+      [id]
+    );
+    return (result.rowCount ?? 0) > 0;
   }
 
   async updateLastAccess(id: number): Promise<void> {

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Building, FileText, Settings, Save, Key } from 'lucide-react';
+import { Building, FileText, Settings, Save, Key, Users, Plus, Pencil, Trash2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import CertificateUpload from '../components/CertificateUpload';
+import { useTranslation } from 'react-i18next';
 
-type TabId = 'empresa' | 'facturacion' | 'certificados' | 'preferencias';
+type TabId = 'empresa' | 'facturacion' | 'certificados' | 'preferencias' | 'usuarios';
 
 type EmpresaConfig = {
   empresa_nif: string;
@@ -37,12 +38,46 @@ type PreferenciasConfig = {
 };
 
 const API_URL = 'http://localhost:3000/api/v1/configuracion';
+const API_BASE = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000';
+
+type UsuarioRow = {
+  id: number;
+  nombre: string;
+  email: string;
+  rol: string;
+  activo: boolean;
+  ultimo_acceso: string | null;
+  created_at: string;
+};
+
+type UsuarioFormData = {
+  nombre: string;
+  email: string;
+  password: string;
+  rol: string;
+  activo: boolean;
+};
+
+const EMPTY_FORM: UsuarioFormData = { nombre: '', email: '', password: '', rol: 'admin', activo: true };
 
 const Configuracion = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabId>('empresa');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+
+  // ── Usuarios state ──
+  const [usuarios, setUsuarios] = useState<UsuarioRow[]>([]);
+  const [usuariosLoading, setUsuariosLoading] = useState(false);
+  const [usuariosError, setUsuariosError] = useState('');
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<UsuarioRow | null>(null);
+  const [userForm, setUserForm] = useState<UsuarioFormData>(EMPTY_FORM);
+  const [userFormError, setUserFormError] = useState('');
+  const [userFormSaving, setUserFormSaving] = useState(false);
+  const [showUserPassword, setShowUserPassword] = useState(false);
+  const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
 
   const [empresa, setEmpresa] = useState<EmpresaConfig>({
     empresa_nif: '',
@@ -136,7 +171,105 @@ const Configuracion = () => {
     { id: 'facturacion' as TabId, label: 'Facturación', icon: FileText },
     { id: 'certificados' as TabId, label: 'Certificados', icon: Key },
     { id: 'preferencias' as TabId, label: 'Preferencias', icon: Settings },
+    { id: 'usuarios' as TabId, label: 'Usuarios', icon: Users },
   ];
+
+  // ── User management helpers ──
+  const getAuthHeaders = () => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('easyfactu_token') || ''}`,
+  });
+
+  const loadUsuarios = async () => {
+    setUsuariosLoading(true);
+    setUsuariosError('');
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/usuarios`, { headers: getAuthHeaders() });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al cargar usuarios');
+      setUsuarios(data.users || []);
+    } catch (e: any) {
+      setUsuariosError(e.message);
+    } finally {
+      setUsuariosLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'usuarios') loadUsuarios();
+  }, [activeTab]);
+
+  const openCreateUser = () => {
+    setEditingUser(null);
+    setUserForm(EMPTY_FORM);
+    setUserFormError('');
+    setShowUserPassword(false);
+    setShowUserModal(true);
+  };
+
+  const openEditUser = (u: UsuarioRow) => {
+    setEditingUser(u);
+    setUserForm({ nombre: u.nombre, email: u.email, password: '', rol: u.rol, activo: u.activo });
+    setUserFormError('');
+    setShowUserPassword(false);
+    setShowUserModal(true);
+  };
+
+  const saveUser = async () => {
+    setUserFormError('');
+    if (!userForm.nombre.trim() || !userForm.email.trim()) {
+      setUserFormError('Nombre y email son obligatorios.');
+      return;
+    }
+    if (!editingUser && userForm.password.length < 8) {
+      setUserFormError('La contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+    if (editingUser && userForm.password && userForm.password.length < 8) {
+      setUserFormError('La contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+    setUserFormSaving(true);
+    try {
+      const body: Record<string, unknown> = {
+        nombre: userForm.nombre,
+        email: userForm.email,
+        rol: userForm.rol,
+        activo: userForm.activo,
+      };
+      if (!editingUser || userForm.password) body.password = userForm.password;
+
+      const url = editingUser
+        ? `${API_BASE}/api/v1/usuarios/${editingUser.id}`
+        : `${API_BASE}/api/v1/usuarios`;
+      const method = editingUser ? 'PUT' : 'POST';
+      const res = await fetch(url, { method, headers: getAuthHeaders(), body: JSON.stringify(body) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al guardar usuario');
+      setShowUserModal(false);
+      loadUsuarios();
+    } catch (e: any) {
+      setUserFormError(e.message);
+    } finally {
+      setUserFormSaving(false);
+    }
+  };
+
+  const confirmDeleteUser = async (id: number) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/usuarios/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al eliminar usuario');
+      setDeletingUserId(null);
+      loadUsuarios();
+    } catch (e: any) {
+      alert(e.message);
+      setDeletingUserId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -463,6 +596,253 @@ const Configuracion = () => {
                   {saving ? 'Guardando...' : 'Guardar preferencias'}
                 </button>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'usuarios' && (
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    {t('usuarios.title')}
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    {t('usuarios.subtitle')}
+                  </p>
+                </div>
+                <button
+                  onClick={openCreateUser}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition"
+                  style={{ backgroundColor: '#6d4c51' }}
+                >
+                  <Plus className="w-4 h-4" />
+                  {t('usuarios.createBtn')}
+                </button>
+              </div>
+
+              {usuariosLoading && (
+                <div className="text-gray-500 dark:text-gray-400 text-sm py-8 text-center">
+                  {t('usuarios.loading')}
+                </div>
+              )}
+
+              {usuariosError && (
+                <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm py-4">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  {usuariosError}
+                </div>
+              )}
+
+              {!usuariosLoading && !usuariosError && (
+                <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                      <tr>
+                        {(['nombre','email','rol','activo','ultimoAcceso','acciones'] as const).map((col) => (
+                          <th key={col} className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">
+                            {t(`usuarios.table.${col}`)}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                      {usuarios.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
+                            {t('usuarios.noUsers')}
+                          </td>
+                        </tr>
+                      ) : usuarios.map((u) => (
+                        <tr key={u.id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+                          <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{u.nombre}</td>
+                          <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{u.email}</td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              u.rol === 'admin'
+                                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
+                                : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                            }`}>
+                              {u.rol === 'admin' ? t('usuarios.modal.rolAdmin') : t('usuarios.modal.rolViewer')}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              u.activo
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                                : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                            }`}>
+                              {u.activo ? '✓' : '✗'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
+                            {u.ultimo_acceso
+                              ? new Date(u.ultimo_acceso).toLocaleString()
+                              : t('usuarios.neverAccessed')}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => openEditUser(u)}
+                                className="p-1.5 text-gray-500 hover:text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-900/30 rounded transition"
+                                title="Editar"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => setDeletingUserId(u.id)}
+                                className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition"
+                                title="Eliminar"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Delete confirmation */}
+              {deletingUserId !== null && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-sm p-6">
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{t('usuarios.deleteTitle')}</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                      {t('usuarios.deleteConfirm', {
+                        name: usuarios.find((u) => u.id === deletingUserId)?.nombre || '',
+                      })}
+                    </p>
+                    <div className="flex gap-3 justify-end">
+                      <button
+                        onClick={() => setDeletingUserId(null)}
+                        className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
+                        {t('usuarios.cancel')}
+                      </button>
+                      <button
+                        onClick={() => confirmDeleteUser(deletingUserId)}
+                        className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700"
+                      >
+                        {t('usuarios.delete')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Create / Edit modal */}
+              {showUserModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6">
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-5">
+                      {editingUser ? t('usuarios.modal.editTitle') : t('usuarios.modal.createTitle')}
+                    </h3>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          {t('usuarios.modal.nombre')}
+                        </label>
+                        <input
+                          type="text"
+                          value={userForm.nombre}
+                          onChange={(e) => setUserForm({ ...userForm, nombre: e.target.value })}
+                          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6d4c51]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          {t('usuarios.modal.email')}
+                        </label>
+                        <input
+                          type="email"
+                          value={userForm.email}
+                          onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6d4c51]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          {editingUser ? t('usuarios.modal.passwordEdit') : t('usuarios.modal.password')}
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showUserPassword ? 'text' : 'password'}
+                            value={userForm.password}
+                            onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                            placeholder={editingUser ? '••••••••' : ''}
+                            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 pr-10 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6d4c51]"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowUserPassword((v) => !v)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                            tabIndex={-1}
+                          >
+                            {showUserPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">{t('usuarios.modal.passwordHint')}</p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          {t('usuarios.modal.rol')}
+                        </label>
+                        <select
+                          value={userForm.rol}
+                          onChange={(e) => setUserForm({ ...userForm, rol: e.target.value })}
+                          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6d4c51]"
+                        >
+                          <option value="admin">{t('usuarios.modal.rolAdmin')}</option>
+                          <option value="viewer">{t('usuarios.modal.rolViewer')}</option>
+                        </select>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <input
+                          id="user-activo"
+                          type="checkbox"
+                          checked={userForm.activo}
+                          onChange={(e) => setUserForm({ ...userForm, activo: e.target.checked })}
+                          className="w-4 h-4 rounded"
+                        />
+                        <label htmlFor="user-activo" className="text-sm text-gray-700 dark:text-gray-300">
+                          {t('usuarios.modal.activo')}
+                        </label>
+                      </div>
+
+                      {userFormError && (
+                        <div className="flex items-start gap-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg px-3 py-2 text-sm text-red-700 dark:text-red-300">
+                          <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                          {userFormError}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-3 justify-end mt-6">
+                      <button
+                        onClick={() => setShowUserModal(false)}
+                        className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
+                        {t('usuarios.cancel')}
+                      </button>
+                      <button
+                        onClick={saveUser}
+                        disabled={userFormSaving}
+                        className="px-4 py-2 text-sm rounded-lg text-white font-medium disabled:opacity-60 transition"
+                        style={{ backgroundColor: '#6d4c51' }}
+                      >
+                        {userFormSaving ? t('usuarios.saving') : (editingUser ? t('usuarios.saveChanges') : t('usuarios.createBtn'))}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

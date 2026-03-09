@@ -297,5 +297,41 @@
     "errorConnection": "Could not connect to the server.",
     "firstRunTitle": "Welcome to EasyFactu",
     "firstRunSubtitle": "No users registered yet. Fill in the form to create the first administrator."
+  },
+  "usuarios": {
+    "title": "User management",
+    "subtitle": "Manage application access accounts.",
+    "createBtn": "New user",
+    "table": {
+      "nombre": "Name",
+      "email": "Email",
+      "rol": "Role",
+      "activo": "Active",
+      "ultimoAcceso": "Last access",
+      "acciones": "Actions"
+    },
+    "modal": {
+      "createTitle": "Create user",
+      "editTitle": "Edit user",
+      "nombre": "Full name",
+      "email": "Email address",
+      "password": "Password",
+      "passwordEdit": "New password (leave blank to keep current)",
+      "rol": "Role",
+      "rolAdmin": "Administrator",
+      "rolViewer": "Read-only",
+      "activo": "Active user",
+      "passwordHint": "At least 8 characters"
+    },
+    "deleteConfirm": "Are you sure you want to delete the user «{name}»? This cannot be undone.",
+    "neverAccessed": "Never",
+    "noUsers": "No users registered.",
+    "ownAccountNote": "Your own account cannot be deleted.",
+    "loading": "Loading users...",
+    "deleteTitle": "Delete user",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "saving": "Saving...",
+    "saveChanges": "Save changes"
   }
 }
