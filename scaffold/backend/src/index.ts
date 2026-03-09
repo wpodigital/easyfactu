@@ -243,13 +243,6 @@ app.delete("/api/v1/invoices/:id", async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Invoice not found' });
     }
     
-    if (factura.validation_status !== 'Correcto') {
-      return res.status(400).json({
-        error: 'Cannot cancel',
-        message: 'Only validated invoices can be cancelled',
-      });
-    }
-    
     const deleted = await facturasRepository.delete(id);
     
     if (deleted) {
@@ -262,6 +255,38 @@ app.delete("/api/v1/invoices/:id", async (req: Request, res: Response) => {
     } else {
       res.status(500).json({ error: 'Failed to cancel invoice' });
     }
+  } catch (error) {
+    res.status(500).json({
+      error: 'Internal server error',
+      message: (error as Error).message,
+    });
+  }
+});
+
+/**
+ * GET /api/v1/invoices/stats
+ * Get invoice statistics
+ */
+app.get("/api/v1/invoices/stats", async (req: Request, res: Response) => {
+  try {
+    const pool = (facturasRepository as any).pool;
+    const result = await pool.query(`
+      SELECT
+        COUNT(*) AS total,
+        COUNT(*) FILTER (WHERE estado_registro = 'Anulada') AS anuladas,
+        COUNT(*) FILTER (WHERE validation_status = 'Correcto' AND estado_registro != 'Anulada') AS validadas,
+        COUNT(*) FILTER (WHERE (validation_status IS NULL OR validation_status != 'Correcto') AND estado_registro != 'Anulada') AS pendientes,
+        COALESCE(SUM(importe_total) FILTER (WHERE estado_registro != 'Anulada'), 0) AS importe_total
+      FROM facturas
+    `);
+    const row = result.rows[0];
+    res.json({
+      total: parseInt(row.total, 10),
+      validadas: parseInt(row.validadas, 10),
+      pendientes: parseInt(row.pendientes, 10),
+      anuladas: parseInt(row.anuladas, 10),
+      importeTotal: parseFloat(row.importe_total),
+    });
   } catch (error) {
     res.status(500).json({
       error: 'Internal server error',
@@ -299,11 +324,15 @@ app.get("/api/v1/invoices", async (req: Request, res: Response) => {
       invoices: facturas.map(f => ({
         id: f.id,
         idEmisor: f.id_emisor_factura,
+        nombreEmisor: f.nombre_razon_emisor,
         numSerie: f.num_serie_factura,
         fecha: f.fecha_expedicion_factura,
         tipoFactura: f.tipo_factura,
+        importeTotal: f.importe_total,
+        cuotaTotal: f.cuota_total,
         status: f.estado_registro,
         validationStatus: f.validation_status,
+        validationCSV: f.validation_csv,
         timestamp: f.created_at,
       })),
     });
