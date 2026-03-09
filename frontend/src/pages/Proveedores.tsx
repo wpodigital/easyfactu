@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Truck, Search, Plus, Edit2, Trash2, X } from 'lucide-react';
 
+const API_BASE = '/api/v1';
+const authHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${localStorage.getItem('easyfactu_token') || ''}`,
+});
+
 interface Proveedor {
   id: number;
   nif: string;
@@ -48,7 +54,7 @@ export default function Proveedores() {
   const fetchProveedores = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3000/api/v1/proveedores');
+      const response = await fetch(`${API_BASE}/proveedores`, { headers: authHeaders() });
       const data = await response.json();
       setProveedores(data.proveedores || []);
     } catch (error) {
@@ -64,14 +70,14 @@ export default function Proveedores() {
     
     try {
       const url = editingProveedor
-        ? `http://localhost:3000/api/v1/proveedores/${editingProveedor.id}`
-        : 'http://localhost:3000/api/v1/proveedores';
+        ? `${API_BASE}/proveedores/${editingProveedor.id}`
+        : `${API_BASE}/proveedores`;
       
       const method = editingProveedor ? 'PUT' : 'POST';
       
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify(formData)
       });
 
@@ -92,8 +98,9 @@ export default function Proveedores() {
     if (!confirm('¿Estás seguro de eliminar este proveedor?')) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/proveedores/${id}`, {
-        method: 'DELETE'
+      const response = await fetch(`${API_BASE}/proveedores/${id}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
       });
 
       if (response.ok) {

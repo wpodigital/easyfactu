@@ -15,6 +15,12 @@ import {
   Building2,
 } from 'lucide-react';
 
+const API_BASE = '/api/v1';
+const authHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${localStorage.getItem('easyfactu_token') || ''}`,
+});
+
 interface Cliente {
   id: number;
   nif: string;
@@ -51,7 +57,9 @@ export const Clientes: React.FC = () => {
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
       
-      const response = await fetch(`http://localhost:3000/api/v1/clientes?${params}`);
+      const response = await fetch(`${API_BASE}/clientes?${params}`, {
+        headers: authHeaders(),
+      });
       const data = await response.json();
       setClientes(data.clientes || []);
     } catch (error) {
@@ -77,8 +85,9 @@ export const Clientes: React.FC = () => {
     if (!confirm(t('clientes.confirmDelete'))) return;
 
     try {
-      await fetch(`http://localhost:3000/api/v1/clientes/${id}`, {
+      await fetch(`${API_BASE}/clientes/${id}`, {
         method: 'DELETE',
+        headers: authHeaders(),
       });
       fetchClientes();
     } catch (error) {
@@ -91,14 +100,14 @@ export const Clientes: React.FC = () => {
 
     try {
       const url = editingCliente
-        ? `http://localhost:3000/api/v1/clientes/${editingCliente.id}`
-        : 'http://localhost:3000/api/v1/clientes';
+        ? `${API_BASE}/clientes/${editingCliente.id}`
+        : `${API_BASE}/clientes`;
 
       const method = editingCliente ? 'PUT' : 'POST';
 
       await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify(formData),
       });
 

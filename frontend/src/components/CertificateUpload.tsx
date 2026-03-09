@@ -18,7 +18,10 @@ type Certificado = {
   created_at: string;
 };
 
-const API_URL = 'http://localhost:3000/api/v1/certificados';
+const API_URL = '/api/v1/certificados';
+const authHeaders = () => ({
+  'Authorization': `Bearer ${localStorage.getItem('easyfactu_token') || ''}`,
+});
 
 export default function CertificateUpload() {
   const [certificados, setCertificados] = useState<Certificado[]>([]);
@@ -31,7 +34,7 @@ export default function CertificateUpload() {
 
   const loadCertificados = async () => {
     try {
-      const response = await fetch(API_URL);
+      const response = await fetch(API_URL, { headers: authHeaders() });
       const data = await response.json();
       setCertificados(data);
     } catch (error) {
@@ -69,6 +72,7 @@ export default function CertificateUpload() {
 
       const response = await fetch(API_URL, {
         method: 'POST',
+        headers: authHeaders(),
         body: formData,
       });
 
@@ -95,6 +99,7 @@ export default function CertificateUpload() {
     try {
       const response = await fetch(`${API_URL}/${id}/activar`, {
         method: 'POST',
+        headers: authHeaders(),
       });
 
       if (!response.ok) {
@@ -115,6 +120,7 @@ export default function CertificateUpload() {
     try {
       const response = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE',
+        headers: authHeaders(),
       });
 
       if (!response.ok) {

@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileText, Search, Plus, Eye, Trash2, X, CheckCircle, Clock, AlertCircle, XCircle, Send } from 'lucide-react';
 
-const API_URL = 'http://localhost:3000/api/v1';
+const API_URL = '/api/v1';
+const authHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${localStorage.getItem('easyfactu_token') || ''}`,
+});
 
 interface Factura {
   id: number;
@@ -67,7 +71,7 @@ export default function FacturasEmitidas() {
   const fetchFacturas = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/invoices`);
+      const response = await fetch(`${API_URL}/invoices`, { headers: authHeaders() });
       const data = await response.json();
       setFacturas(data.invoices || []);
     } catch (error) {
@@ -80,7 +84,7 @@ export default function FacturasEmitidas() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch(`${API_URL}/invoices/stats`);
+      const response = await fetch(`${API_URL}/invoices/stats`, { headers: authHeaders() });
       if (response.ok) {
         const data = await response.json();
         setStats(data);
@@ -93,7 +97,7 @@ export default function FacturasEmitidas() {
   const handleDelete = async (id: number) => {
     if (!confirm(t('facturasEmitidas.confirmDelete'))) return;
     try {
-      const response = await fetch(`${API_URL}/invoices/${id}`, { method: 'DELETE' });
+      const response = await fetch(`${API_URL}/invoices/${id}`, { method: 'DELETE', headers: authHeaders() });
       if (response.ok) {
         fetchFacturas();
         fetchStats();
@@ -108,7 +112,7 @@ export default function FacturasEmitidas() {
   const handleValidate = async (id: number) => {
     if (!confirm(t('facturasEmitidas.validateConfirm'))) return;
     try {
-      const response = await fetch(`${API_URL}/invoices/${id}/validate`, { method: 'POST' });
+      const response = await fetch(`${API_URL}/invoices/${id}/validate`, { method: 'POST', headers: authHeaders() });
       if (response.ok) {
         alert(t('facturasEmitidas.validateSuccess'));
         fetchFacturas();
@@ -164,7 +168,7 @@ export default function FacturasEmitidas() {
       };
       const response = await fetch(`${API_URL}/invoices`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify(body),
       });
       if (response.ok) {

@@ -12,8 +12,11 @@ import {
   FileText,
 } from 'lucide-react';
 
-const API_URL = 'http://localhost:3000/api/v1';
+const API_URL = '/api/v1';
 const COLOR = '#c4625a';
+const authHeaders = () => ({
+  'Authorization': `Bearer ${localStorage.getItem('easyfactu_token') || ''}`,
+});
 
 interface Trimestre {
   trimestre: number;
@@ -55,7 +58,7 @@ export default function Renta() {
   const fetchRenta = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/renta/resumen?year=${year}`);
+      const res = await fetch(`${API_URL}/renta/resumen?year=${year}`, { headers: authHeaders() });
       if (res.ok) {
         setData(await res.json());
       }

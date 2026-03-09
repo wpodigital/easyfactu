@@ -37,8 +37,12 @@ type PreferenciasConfig = {
   usuario_formato_moneda: string;
 };
 
-const API_URL = 'http://localhost:3000/api/v1/configuracion';
-const API_BASE = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000';
+const API_URL = '/api/v1/configuracion';
+const API_BASE = '';
+const getAuthHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${localStorage.getItem('easyfactu_token') || ''}`,
+});
 
 type UsuarioRow = {
   id: number;
@@ -114,7 +118,7 @@ const Configuracion = () => {
   const loadConfiguracion = async () => {
     try {
       setLoading(true);
-      const response = await fetch(API_URL);
+      const response = await fetch(API_URL, { headers: getAuthHeaders() });
       const data = await response.json();
 
       if (data.empresa) {
@@ -147,9 +151,7 @@ const Configuracion = () => {
 
       const response = await fetch(API_URL, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload),
       });
 
@@ -175,10 +177,6 @@ const Configuracion = () => {
   ];
 
   // ── User management helpers ──
-  const getAuthHeaders = () => ({
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${localStorage.getItem('easyfactu_token') || ''}`,
-  });
 
   const loadUsuarios = async () => {
     setUsuariosLoading(true);

@@ -270,6 +270,7 @@
     }
   },
   "renta": {
+    "title": "Declaración de Renta",
     "subtitle": "Resumen fiscal basado en tus facturas emitidas y recibidas",
     "year": "Año fiscal",
     "loading": "Cargando resumen fiscal...",

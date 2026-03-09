@@ -3,6 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { Receipt, Search, Plus, Edit2, Trash2, X, CheckCircle, Clock, AlertTriangle, Eye, Filter, Paperclip, FileText, Upload } from 'lucide-react';
 
 const COLOR = '#d4a574';
+const API_BASE = '/api/v1';
+const authHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${localStorage.getItem('easyfactu_token') || ''}`,
+});
 
 interface Proveedor {
   id: number;
@@ -73,7 +78,7 @@ export default function FacturasRecibidas() {
   const fetchFacturas = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3000/api/v1/facturas-recibidas');
+      const response = await fetch(`${API_BASE}/facturas-recibidas`, { headers: authHeaders() });
       const data = await response.json();
       setFacturas(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -86,7 +91,7 @@ export default function FacturasRecibidas() {
 
   const fetchProveedores = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/v1/proveedores');
+      const response = await fetch(`${API_BASE}/proveedores`, { headers: authHeaders() });
       const data = await response.json();
       setProveedores(data.proveedores || []);
     } catch (error) {
@@ -180,14 +185,14 @@ export default function FacturasRecibidas() {
       };
 
       const url = editingFactura
-        ? `http://localhost:3000/api/v1/facturas-recibidas/${editingFactura.id}`
-        : 'http://localhost:3000/api/v1/facturas-recibidas';
+        ? `${API_BASE}/facturas-recibidas/${editingFactura.id}`
+        : `${API_BASE}/facturas-recibidas`;
 
       const method = editingFactura ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify(payload),
       });
 
@@ -198,8 +203,9 @@ export default function FacturasRecibidas() {
           const fd = new FormData();
           selectedFiles.forEach((f) => fd.append('archivos', f));
           try {
-            await fetch(`http://localhost:3000/api/v1/facturas-recibidas/${saved.id}/archivos`, {
+            await fetch(`${API_BASE}/facturas-recibidas/${saved.id}/archivos`, {
               method: 'POST',
+              headers: { 'Authorization': `Bearer ${localStorage.getItem('easyfactu_token') || ''}` },
               body: fd,
             });
           } catch (uploadErr) {
@@ -223,8 +229,8 @@ export default function FacturasRecibidas() {
     if (!confirm(t('facturasRecibidas.confirmMarkAsPaid', '¿Estás seguro de marcar esta factura como pagada?'))) return;
     try {
       const response = await fetch(
-        `http://localhost:3000/api/v1/facturas-recibidas/${id}/pagar`,
-        { method: 'POST' }
+        `${API_BASE}/facturas-recibidas/${id}/pagar`,
+        { method: 'POST', headers: authHeaders() }
       );
       if (response.ok) {
         fetchFacturas();
@@ -241,8 +247,8 @@ export default function FacturasRecibidas() {
     if (!confirm(t('facturasRecibidas.confirmDelete', '¿Estás seguro de eliminar esta factura?'))) return;
     try {
       const response = await fetch(
-        `http://localhost:3000/api/v1/facturas-recibidas/${id}`,
-        { method: 'DELETE' }
+        `${API_BASE}/facturas-recibidas/${id}`,
+        { method: 'DELETE', headers: authHeaders() }
       );
       if (response.ok) {
         fetchFacturas();
@@ -295,7 +301,7 @@ export default function FacturasRecibidas() {
   const loadDetailArchivos = useCallback(async (facturaId: number) => {
     setLoadingArchivos(true);
     try {
-      const res = await fetch(`http://localhost:3000/api/v1/facturas-recibidas/${facturaId}/archivos`);
+      const res = await fetch(`${API_BASE}/facturas-recibidas/${facturaId}/archivos`, { headers: authHeaders() });
       if (res.ok) {
         const data = await res.json();
         setDetailArchivos(data);
@@ -681,7 +687,7 @@ export default function FacturasRecibidas() {
                       <li key={idx} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2">
                         <FileText className="w-4 h-4 text-red-500 shrink-0" />
                         <a
-                          href={`http://localhost:3000${archivo.url}`}
+                          href={archivo.url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-sm text-blue-600 dark:text-blue-400 hover:underline truncate flex-1"
