@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Receipt, Search, Plus, Edit2, Trash2, X, CheckCircle, Clock, Euro } from 'lucide-react';
+import { Receipt, Search, Plus, Edit2, Trash2, X, CheckCircle, Clock, AlertTriangle, Eye, Filter } from 'lucide-react';
 
 const COLOR = '#d4a574';
 
@@ -30,10 +30,27 @@ const emptyForm = {
   fecha_factura: '',
   fecha_vencimiento: '',
   base_imponible: '',
+  iva_percent: '21',
   iva_total: '',
   importe_total: '',
   notas: '',
 };
+
+type EstadoFilter = 'all' | 'pendiente' | 'pagada' | 'vencida';
+
+const TODAY = new Date().toISOString().slice(0, 10);
+
+function isOverdue(factura: FacturaRecibida): boolean {
+  if (factura.estado === 'pagada') return false;
+  if (!factura.fecha_vencimiento) return false;
+  return factura.fecha_vencimiento.slice(0, 10) < TODAY;
+}
+
+function getEstadoEfectivo(factura: FacturaRecibida): string {
+  if (factura.estado === 'pagada') return 'pagada';
+  if (isOverdue(factura)) return 'vencida';
+  return 'pendiente';
+}
 
 export default function FacturasRecibidas() {
   const { t } = useTranslation();
@@ -41,16 +58,14 @@ export default function FacturasRecibidas() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [estadoFilter, setEstadoFilter] = useState<EstadoFilter>('all');
   const [showModal, setShowModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [editingFactura, setEditingFactura] = useState<FacturaRecibida | null>(null);
+  const [detailFactura, setDetailFactura] = useState<FacturaRecibida | null>(null);
   const [formData, setFormData] = useState({ ...emptyForm });
 
-  useEffect(() => {
-    fetchFacturas();
-    fetchProveedores();
-  }, []);
-
-  const fetchFacturas = async () => {
+  const fetchFacturas = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('http://localhost:3000/api/v1/facturas-recibidas');
@@ -62,9 +77,9 @@ export default function FacturasRecibidas() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchProveedores = async () => {
+  const fetchProveedores = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:3000/api/v1/proveedores');
       const data = await response.json();
@@ -72,6 +87,46 @@ export default function FacturasRecibidas() {
     } catch (error) {
       console.error('Error fetching proveedores:', error);
     }
+  }, []);
+
+  useEffect(() => {
+    fetchFacturas();
+    fetchProveedores();
+  }, [fetchFacturas, fetchProveedores]);
+
+  // Auto-calculate IVA and total when base or IVA % changes
+  const handleBaseChange = (base: string) => {
+    const baseNum = parseFloat(base) || 0;
+    const pct = parseFloat(formData.iva_percent) || 0;
+    const iva = (baseNum * pct) / 100;
+    setFormData((prev) => ({
+      ...prev,
+      base_imponible: base,
+      iva_total: iva.toFixed(2),
+      importe_total: (baseNum + iva).toFixed(2),
+    }));
+  };
+
+  const handleIvaPctChange = (pct: string) => {
+    const baseNum = parseFloat(formData.base_imponible) || 0;
+    const pctNum = parseFloat(pct) || 0;
+    const iva = (baseNum * pctNum) / 100;
+    setFormData((prev) => ({
+      ...prev,
+      iva_percent: pct,
+      iva_total: iva.toFixed(2),
+      importe_total: (baseNum + iva).toFixed(2),
+    }));
+  };
+
+  const handleIvaAmountChange = (iva: string) => {
+    const baseNum = parseFloat(formData.base_imponible) || 0;
+    const ivaNum = parseFloat(iva) || 0;
+    setFormData((prev) => ({
+      ...prev,
+      iva_total: iva,
+      importe_total: (baseNum + ivaNum).toFixed(2),
+    }));
   };
 
   const handleCreate = () => {
@@ -88,11 +143,17 @@ export default function FacturasRecibidas() {
       fecha_factura: factura.fecha_factura ? factura.fecha_factura.slice(0, 10) : '',
       fecha_vencimiento: factura.fecha_vencimiento ? factura.fecha_vencimiento.slice(0, 10) : '',
       base_imponible: String(factura.base_imponible ?? ''),
+      iva_percent: '21',
       iva_total: String(factura.iva_total ?? ''),
       importe_total: String(factura.importe_total ?? ''),
       notas: factura.notas || '',
     });
     setShowModal(true);
+  };
+
+  const handleViewDetail = (factura: FacturaRecibida) => {
+    setDetailFactura(factura);
+    setShowDetailModal(true);
   };
 
   const handleCloseModal = () => {
@@ -105,12 +166,13 @@ export default function FacturasRecibidas() {
     e.preventDefault();
     try {
       const payload = {
-        ...formData,
+        numero_factura: formData.numero_factura,
         proveedor_id: formData.proveedor_id ? Number(formData.proveedor_id) : null,
+        fecha_factura: formData.fecha_factura,
+        fecha_vencimiento: formData.fecha_vencimiento || null,
         base_imponible: formData.base_imponible ? Number(formData.base_imponible) : null,
         iva_total: formData.iva_total ? Number(formData.iva_total) : null,
         importe_total: formData.importe_total ? Number(formData.importe_total) : null,
-        fecha_vencimiento: formData.fecha_vencimiento || null,
         notas: formData.notas || null,
       };
 
@@ -175,13 +237,30 @@ export default function FacturasRecibidas() {
     }
   };
 
+  // --- Stats ---
+  const totalPendiente = facturas
+    .filter((f) => getEstadoEfectivo(f) === 'pendiente')
+    .reduce((s, f) => s + (Number(f.importe_total) || 0), 0);
+  const totalVencidas = facturas
+    .filter((f) => getEstadoEfectivo(f) === 'vencida')
+    .reduce((s, f) => s + (Number(f.importe_total) || 0), 0);
+  const totalPagadas = facturas
+    .filter((f) => f.estado === 'pagada')
+    .reduce((s, f) => s + (Number(f.importe_total) || 0), 0);
+  const countVencidas = facturas.filter((f) => getEstadoEfectivo(f) === 'vencida').length;
+
+  // --- Filtering ---
   const filtered = facturas.filter((f) => {
     const term = searchTerm.toLowerCase();
-    return (
+    const matchesSearch =
       f.numero_factura?.toLowerCase().includes(term) ||
       f.proveedor_nombre?.toLowerCase().includes(term) ||
-      f.estado?.toLowerCase().includes(term)
-    );
+      f.estado?.toLowerCase().includes(term);
+    const estado = getEstadoEfectivo(f);
+    const matchesEstado =
+      estadoFilter === 'all' ||
+      estadoFilter === estado;
+    return matchesSearch && matchesEstado;
   });
 
   const formatDate = (dateStr?: string) => {
@@ -191,15 +270,24 @@ export default function FacturasRecibidas() {
 
   const formatCurrency = (amount?: number) => {
     if (amount == null) return '-';
-    return `${Number(amount).toFixed(2)} EUR`;
+    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(Number(amount));
   };
 
-  const StatusBadge = ({ estado }: { estado: string }) => {
+  const StatusBadge = ({ factura }: { factura: FacturaRecibida }) => {
+    const estado = getEstadoEfectivo(factura);
     if (estado === 'pagada') {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
           <CheckCircle className="w-3 h-3" />
           Pagada
+        </span>
+      );
+    }
+    if (estado === 'vencida') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+          <AlertTriangle className="w-3 h-3" />
+          Vencida
         </span>
       );
     }
@@ -213,48 +301,104 @@ export default function FacturasRecibidas() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      
-        {/* Header */}
-        <div className="bg-white dark:bg-gray-800 shadow">
+
+      {/* Header */}
+      <div className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-lg" style={{ backgroundColor: `${COLOR}20` }}>
-              <Receipt className="w-8 h-8 text-white" style={{ color: COLOR }} />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 rounded-lg" style={{ backgroundColor: `${COLOR}20` }}>
+                <Receipt className="w-8 h-8" style={{ color: COLOR }} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {t('facturasRecibidas.title', 'Facturas Recibidas')}
+                </h1>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">
+                  {t('facturasRecibidas.subtitle', 'Gestiona tus facturas recibidas de proveedores')}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleCreate}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold transition-opacity hover:opacity-90"
+              style={{ backgroundColor: COLOR }}
+            >
+              <Plus className="w-5 h-5" />
+              Nueva Factura
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        {/* Stats cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-5 flex items-center gap-4">
+            <div className="p-3 rounded-full" style={{ backgroundColor: `${COLOR}20` }}>
+              <Receipt className="w-6 h-6" style={{ color: COLOR }} />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {t('facturasRecibidas.title', 'Facturas Recibidas')}
-              </h1>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">
-                  {t('facturasRecibidas.subtitle', 'Gestiona tus facturas recibidas')}
-              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total facturas</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{facturas.length}</p>
             </div>
           </div>
-          <button
-            onClick={handleCreate}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold transition-colors"
-            style={{ backgroundColor: COLOR }}
-          >
-            <Plus className="w-5 h-5" />
-            Nueva Factura
-          </button>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-5 flex items-center gap-4">
+            <div className="p-3 rounded-full bg-yellow-100 dark:bg-yellow-900">
+              <Clock className="w-6 h-6 text-yellow-700 dark:text-yellow-300" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Pendiente de pago</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalPendiente)}</p>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-5 flex items-center gap-4">
+            <div className="p-3 rounded-full bg-red-100 dark:bg-red-900">
+              <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Vencidas ({countVencidas})</p>
+              <p className="text-2xl font-bold text-red-600 dark:text-red-400">{formatCurrency(totalVencidas)}</p>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-5 flex items-center gap-4">
+            <div className="p-3 rounded-full bg-green-100 dark:bg-green-900">
+              <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Pagadas</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totalPagadas)}</p>
+            </div>
+          </div>
         </div>
-        </div>
-        </div>
-        {/* Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search */}
-        <div className="mb-6">
-          <div className="relative">
+
+        {/* Search and filter bar */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Buscar por número, proveedor o estado..."
+              placeholder="Buscar por número o proveedor..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-300"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2"
+              style={{ '--tw-ring-color': `${COLOR}60` } as React.CSSProperties}
             />
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter className="w-5 h-5 text-gray-400 shrink-0" />
+            <select
+              value={estadoFilter}
+              onChange={(e) => setEstadoFilter(e.target.value as EstadoFilter)}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none"
+            >
+              <option value="all">Todos los estados</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="vencida">Vencida</option>
+              <option value="pagada">Pagada</option>
+            </select>
           </div>
         </div>
 
@@ -272,11 +416,11 @@ export default function FacturasRecibidas() {
             <div className="p-12 text-center">
               <Receipt className="w-12 h-12 mx-auto mb-4" style={{ color: COLOR, opacity: 0.3 }} />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                {searchTerm ? 'No se encontraron resultados' : 'No hay facturas recibidas'}
+                {searchTerm || estadoFilter !== 'all' ? 'No se encontraron resultados' : 'No hay facturas recibidas'}
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
-                {searchTerm
-                  ? 'Prueba con otros términos de búsqueda'
+                {searchTerm || estadoFilter !== 'all'
+                  ? 'Prueba con otros términos o filtros'
                   : 'Crea tu primera factura recibida'}
               </p>
             </div>
@@ -285,7 +429,7 @@ export default function FacturasRecibidas() {
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Numero</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Número</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Proveedor</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Fecha</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Vencimiento</th>
@@ -300,7 +444,13 @@ export default function FacturasRecibidas() {
                   {filtered.map((factura) => (
                     <tr key={factura.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                       <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                        {factura.numero_factura}
+                        <button
+                          onClick={() => handleViewDetail(factura)}
+                          className="hover:underline text-left"
+                          style={{ color: COLOR }}
+                        >
+                          {factura.numero_factura}
+                        </button>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
                         {factura.proveedor_nombre || '-'}
@@ -309,7 +459,13 @@ export default function FacturasRecibidas() {
                         {formatDate(factura.fecha_factura)}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                        {formatDate(factura.fecha_vencimiento)}
+                        {isOverdue(factura) ? (
+                          <span className="text-red-600 dark:text-red-400 font-medium">
+                            {formatDate(factura.fecha_vencimiento)}
+                          </span>
+                        ) : (
+                          formatDate(factura.fecha_vencimiento)
+                        )}
                       </td>
                       <td className="px-4 py-3 text-sm text-right text-gray-600 dark:text-gray-300">
                         {formatCurrency(factura.base_imponible)}
@@ -321,10 +477,17 @@ export default function FacturasRecibidas() {
                         {formatCurrency(factura.importe_total)}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <StatusBadge estado={factura.estado} />
+                        <StatusBadge factura={factura} />
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleViewDetail(factura)}
+                            className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                            title="Ver detalles"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
                           {factura.estado !== 'pagada' && (
                             <button
                               onClick={() => handleMarkAsPaid(factura.id)}
@@ -357,9 +520,97 @@ export default function FacturasRecibidas() {
             </div>
           )}
         </div>
-        </div>
+      </div>
 
-      {/* Modal */}
+      {/* Detail modal */}
+      {showDetailModal && detailFactura && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full">
+            <div className="flex items-center justify-between p-6 border-b dark:border-gray-700">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Detalle: {detailFactura.numero_factura}
+              </h2>
+              <button
+                onClick={() => setShowDetailModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="p-6 space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Número</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">{detailFactura.numero_factura}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Proveedor</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">{detailFactura.proveedor_nombre || '-'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Fecha factura</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">{formatDate(detailFactura.fecha_factura)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Fecha vencimiento</span>
+                <span className={`text-sm font-medium ${isOverdue(detailFactura) ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
+                  {formatDate(detailFactura.fecha_vencimiento)}
+                </span>
+              </div>
+              <hr className="border-gray-200 dark:border-gray-700" />
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Base imponible</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">{formatCurrency(detailFactura.base_imponible)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-500 dark:text-gray-400">IVA</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">{formatCurrency(detailFactura.iva_total)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Importe total</span>
+                <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(detailFactura.importe_total)}</span>
+              </div>
+              <hr className="border-gray-200 dark:border-gray-700" />
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Estado</span>
+                <StatusBadge factura={detailFactura} />
+              </div>
+              {detailFactura.fecha_pago && (
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Fecha pago</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">{formatDate(detailFactura.fecha_pago)}</span>
+                </div>
+              )}
+              {detailFactura.notas && (
+                <div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Notas</span>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1 bg-gray-50 dark:bg-gray-700 p-2 rounded">{detailFactura.notas}</p>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-3 px-6 pb-6">
+              {detailFactura.estado !== 'pagada' && (
+                <button
+                  onClick={() => { setShowDetailModal(false); handleMarkAsPaid(detailFactura.id); }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors text-sm font-medium"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Marcar pagada
+                </button>
+              )}
+              <button
+                onClick={() => { setShowDetailModal(false); handleEdit(detailFactura); }}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-opacity hover:opacity-90 text-sm font-medium"
+                style={{ backgroundColor: COLOR }}
+              >
+                <Edit2 className="w-4 h-4" />
+                Editar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create/Edit modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -443,10 +694,26 @@ export default function FacturasRecibidas() {
                     step="0.01"
                     min="0"
                     value={formData.base_imponible}
-                    onChange={(e) => setFormData({ ...formData, base_imponible: e.target.value })}
+                    onChange={(e) => handleBaseChange(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
                     placeholder="0.00"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    IVA (%)
+                  </label>
+                  <select
+                    value={formData.iva_percent}
+                    onChange={(e) => handleIvaPctChange(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="0">0%</option>
+                    <option value="4">4% (superreducido)</option>
+                    <option value="10">10% (reducido)</option>
+                    <option value="21">21% (general)</option>
+                  </select>
                 </div>
 
                 <div>
@@ -458,7 +725,7 @@ export default function FacturasRecibidas() {
                     step="0.01"
                     min="0"
                     value={formData.iva_total}
-                    onChange={(e) => setFormData({ ...formData, iva_total: e.target.value })}
+                    onChange={(e) => handleIvaAmountChange(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
                     placeholder="0.00"
                   />
@@ -466,10 +733,7 @@ export default function FacturasRecibidas() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    <span className="flex items-center gap-1">
-                      <Euro className="w-4 h-4" />
-                      Importe Total *
-                    </span>
+                    Importe Total *
                   </label>
                   <input
                     type="number"
@@ -478,7 +742,7 @@ export default function FacturasRecibidas() {
                     required
                     value={formData.importe_total}
                     onChange={(e) => setFormData({ ...formData, importe_total: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white bg-gray-50 dark:bg-gray-600"
                     placeholder="0.00"
                   />
                 </div>

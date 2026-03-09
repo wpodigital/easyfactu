@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Search, Plus, Eye, Edit2, Trash2, X, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { FileText, Search, Plus, Eye, Trash2, X, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 interface Factura {
   id: number;
