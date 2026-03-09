@@ -213,19 +213,21 @@ export default function FacturasRecibidas() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center">
-            <div className="p-3 rounded-full mr-4" style={{ backgroundColor: `${COLOR}20` }}>
-              <Receipt className="w-8 h-8" style={{ color: COLOR }} />
+        <div className="bg-white dark:bg-gray-800 shadow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 rounded-lg" style={{ backgroundColor: `${COLOR}20` }}>
+              <Receipt className="w-8 h-8 text-white" style={{ color: COLOR }} />
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Facturas Recibidas
+                  {t('facturasRecibidas.title', 'Facturas Recibidas')}
               </h1>
               <p className="text-gray-500 dark:text-gray-400 text-sm">
-                {filtered.length} factura{filtered.length !== 1 ? 's' : ''}
+                  {t('facturasRecibidas.subtitle', 'Gestiona tus facturas recibidas')}
               </p>
             </div>
           </div>
@@ -238,7 +240,10 @@ export default function FacturasRecibidas() {
             Nueva Factura
           </button>
         </div>
-
+        </div>
+        </div>
+        {/* Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search */}
         <div className="mb-6">
           <div className="relative">
@@ -265,7 +270,7 @@ export default function FacturasRecibidas() {
             </div>
           ) : filtered.length === 0 ? (
             <div className="p-12 text-center">
-              <Receipt className="w-16 h-16 mx-auto mb-4" style={{ color: COLOR, opacity: 0.3 }} />
+              <Receipt className="w-12 h-12 mx-auto mb-4" style={{ color: COLOR, opacity: 0.3 }} />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                 {searchTerm ? 'No se encontraron resultados' : 'No hay facturas recibidas'}
               </h3>
@@ -352,7 +357,7 @@ export default function FacturasRecibidas() {
             </div>
           )}
         </div>
-      </div>
+        </div>
 
       {/* Modal */}
       {showModal && (
