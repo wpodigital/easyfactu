@@ -167,6 +167,20 @@ app.post("/api/v1/auth/register", authRateLimiter, async (req: Request, res: Res
 });
 
 /**
+ * GET /api/v1/auth/needs-setup
+ * Returns whether the initial admin registration is still pending.
+ * Public endpoint — no authentication required.
+ */
+app.get("/api/v1/auth/needs-setup", async (_req: Request, res: Response) => {
+  try {
+    const total = await usuariosRepository.countAll();
+    res.json({ needsSetup: total === 0 });
+  } catch (error: any) {
+    res.status(500).json({ error: "Error interno del servidor.", details: error.message });
+  }
+});
+
+/**
  * GET /api/v1/auth/me
  * Returns the current authenticated user's info.
  */

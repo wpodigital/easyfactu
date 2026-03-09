@@ -294,6 +294,8 @@
     "logout": "Log out",
     "userMenu": "User menu",
     "errorGeneric": "Login failed. Please check your credentials.",
-    "errorConnection": "Could not connect to the server."
+    "errorConnection": "Could not connect to the server.",
+    "firstRunTitle": "Welcome to EasyFactu",
+    "firstRunSubtitle": "No users registered yet. Fill in the form to create the first administrator."
   }
 }

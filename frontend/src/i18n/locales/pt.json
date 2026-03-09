@@ -294,6 +294,8 @@
     "logout": "Terminar sessão",
     "userMenu": "Menu do utilizador",
     "errorGeneric": "Erro ao iniciar sessão. Verifique as suas credenciais.",
-    "errorConnection": "Não foi possível conectar ao servidor."
+    "errorConnection": "Não foi possível conectar ao servidor.",
+    "firstRunTitle": "Bem-vindo ao EasyFactu",
+    "firstRunSubtitle": "Nenhum utilizador registado ainda. Preencha o formulário para criar o primeiro administrador."
   }
 }

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LogIn, UserPlus, Eye, EyeOff, FileText, AlertCircle } from 'lucide-react';
+import { LogIn, UserPlus, Eye, EyeOff, FileText, AlertCircle, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const API_BASE = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000';
@@ -16,12 +16,28 @@ const Login: React.FC = () => {
   const from = (location.state as any)?.from?.pathname || '/';
 
   const [mode, setMode] = useState<Mode>('login');
+  const [needsSetup, setNeedsSetup] = useState(false);
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Detect first-run: if no users exist, auto-switch to register tab
+  useEffect(() => {
+    fetch(`${API_BASE}/api/v1/auth/needs-setup`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.needsSetup) {
+          setNeedsSetup(true);
+          setMode('register');
+        }
+      })
+      .catch(() => {
+        // Server not reachable — leave default login mode
+      });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +82,17 @@ const Login: React.FC = () => {
           <h1 className="text-3xl font-bold text-white">EasyFactu</h1>
           <p className="text-sky-200 mt-1 text-sm">{t('auth.subtitle')}</p>
         </div>
+
+        {/* First-run onboarding banner */}
+        {needsSetup && (
+          <div className="mb-4 flex items-start gap-3 bg-emerald-500/20 border border-emerald-400/40 rounded-xl px-4 py-3 text-emerald-100 text-sm">
+            <Sparkles className="w-5 h-5 mt-0.5 flex-shrink-0 text-emerald-300" />
+            <div>
+              <p className="font-semibold">{t('auth.firstRunTitle')}</p>
+              <p className="mt-0.5 opacity-90">{t('auth.firstRunSubtitle')}</p>
+            </div>
+          </div>
+        )}
 
         {/* Card */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">

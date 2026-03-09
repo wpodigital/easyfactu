@@ -10,6 +10,7 @@
     "db:setup": "./scripts/db-setup.sh",
     "db:setup:seed": "./scripts/db-setup.sh --seed",
     "db:reset": "./scripts/db-reset.sh",
+    "db:create-admin": "ts-node src/scripts/create-admin.ts",
     "test:api": "./scripts/test-api.sh",
     "lint": "echo 'No linter configured yet'",
     "type-check": "tsc --noEmit"

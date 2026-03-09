@@ -294,6 +294,8 @@
     "logout": "Se déconnecter",
     "userMenu": "Menu de l'utilisateur",
     "errorGeneric": "Échec de la connexion. Vérifiez vos identifiants.",
-    "errorConnection": "Impossible de se connecter au serveur."
+    "errorConnection": "Impossible de se connecter au serveur.",
+    "firstRunTitle": "Bienvenue sur EasyFactu",
+    "firstRunSubtitle": "Aucun utilisateur enregistré pour l'instant. Remplissez le formulaire pour créer le premier administrateur."
   }
 }

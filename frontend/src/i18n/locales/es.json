@@ -313,6 +313,8 @@
     "logout": "Cerrar sesión",
     "userMenu": "Menú de usuario",
     "errorGeneric": "Error al iniciar sesión. Comprueba tus credenciales.",
-    "errorConnection": "No se pudo conectar con el servidor."
+    "errorConnection": "No se pudo conectar con el servidor.",
+    "firstRunTitle": "Bienvenido a EasyFactu",
+    "firstRunSubtitle": "No hay usuarios registrados todavía. Completa el formulario para crear el primer administrador."
   }
 }

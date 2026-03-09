@@ -294,6 +294,8 @@
     "logout": "Abmelden",
     "userMenu": "Benutzermenü",
     "errorGeneric": "Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Zugangsdaten.",
-    "errorConnection": "Verbindung zum Server konnte nicht hergestellt werden."
+    "errorConnection": "Verbindung zum Server konnte nicht hergestellt werden.",
+    "firstRunTitle": "Willkommen bei EasyFactu",
+    "firstRunSubtitle": "Noch keine Benutzer registriert. Fülle das Formular aus, um den ersten Administrator zu erstellen."
   }
 }
