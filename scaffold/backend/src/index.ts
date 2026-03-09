@@ -8,11 +8,40 @@ import { configuracionRepository } from "./repositories/configuracion.repository
 import { certificadosRepository } from "./repositories/certificados.repository";
 import multer from "multer";
 import { pool } from "./config/database";
+import path from "path";
+import fs from "fs";
 
 const clientesRepository = new ClientesRepository(pool);
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
+
+// Disk storage for factura attachments
+const facturasArchivosStorage = multer.diskStorage({
+  destination: (req: Request, _file: any, cb: (error: Error | null, destination: string) => void) => {
+    const facturaId = (req.params as Record<string, string>).id || "unknown";
+    const dir = path.join(__dirname, "..", "uploads", "facturas-recibidas", facturaId);
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (_req: Request, file: any, cb: (error: Error | null, filename: string) => void) => {
+    const timestamp = Date.now();
+    const safeName = (file.originalname as string).replace(/[^a-zA-Z0-9._-]/g, "_");
+    cb(null, `${timestamp}_${safeName}`);
+  },
+});
+const uploadArchivos = multer({
+  storage: facturasArchivosStorage,
+  fileFilter: (_req: Request, file: any, cb: multer.FileFilterCallback) => {
+    if ((file.mimetype as string) === "application/pdf" || (file.originalname as string).toLowerCase().endsWith(".pdf")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Solo se permiten archivos PDF"));
+    }
+  },
+  limits: { fileSize: 20 * 1024 * 1024, files: 10 }, // 20 MB per file, max 10 files
+});
+
 app.use(express.json());
 app.use(express.text({ type: "application/xml" }));
 
@@ -876,6 +905,101 @@ app.delete("/api/v1/facturas-recibidas/:id", async (req: Request, res: Response)
       error: "Error al eliminar factura",
       details: error.message
     });
+  }
+});
+
+// Subir archivos adjuntos a una factura recibida
+app.post(
+  "/api/v1/facturas-recibidas/:id/archivos",
+  (req: Request, res: Response, next: express.NextFunction) => {
+    uploadArchivos.array("archivos", 10)(req, res, (err: unknown) => {
+      if (err) {
+        const msg = err instanceof Error ? err.message : "Error al subir archivo";
+        return res.status(400).json({ error: msg });
+      }
+      next();
+    });
+  },
+  async (req: Request, res: Response) => {
+    try {
+      const files = (req as any).files as Array<{originalname: string; filename: string; size: number}> ?? [];
+      if (files.length === 0) {
+        return res.status(400).json({ error: "No se enviaron archivos" });
+      }
+      const result = files.map((f) => ({
+        nombre: f.originalname,
+        filename: f.filename,
+        size: f.size,
+        url: `/api/v1/facturas-recibidas/${req.params.id}/archivos/${f.filename}`,
+      }));
+      res.status(201).json(result);
+    } catch (error: any) {
+      res.status(500).json({ error: "Error al subir archivos", details: error.message });
+    }
+  }
+);
+
+// Listar archivos adjuntos de una factura recibida
+app.get("/api/v1/facturas-recibidas/:id/archivos", (req: Request, res: Response) => {
+  try {
+    const dir = path.join(__dirname, "..", "uploads", "facturas-recibidas", req.params.id);
+    if (!fs.existsSync(dir)) {
+      return res.json([]);
+    }
+    const files = fs.readdirSync(dir).map((filename) => {
+      const stat = fs.statSync(path.join(dir, filename));
+      // Strip the timestamp prefix to recover the original name (replace only the leading timestamp and first underscore)
+      const nombre = filename.replace(/^\d+_/, "");
+      return {
+        nombre,
+        filename,
+        size: stat.size,
+        url: `/api/v1/facturas-recibidas/${req.params.id}/archivos/${filename}`,
+      };
+    });
+    res.json(files);
+  } catch (error: any) {
+    res.status(500).json({ error: "Error al listar archivos", details: error.message });
+  }
+});
+
+// Descargar / servir un archivo adjunto
+app.get("/api/v1/facturas-recibidas/:id/archivos/:filename", (req: Request, res: Response) => {
+  const rawFilename = req.params.filename;
+  // Prevent path traversal: only allow safe filenames (no slashes or dots leading to parent dirs)
+  if (!rawFilename || /[/\\]/.test(rawFilename) || rawFilename.startsWith("..")) {
+    return res.status(400).json({ error: "Nombre de archivo inválido" });
+  }
+  const filePath = path.join(
+    __dirname, "..", "uploads", "facturas-recibidas",
+    req.params.id, rawFilename
+  );
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: "Archivo no encontrado" });
+  }
+  res.setHeader("Content-Disposition", `inline; filename="${rawFilename}"`);
+  res.sendFile(path.resolve(filePath));
+});
+
+// Eliminar un archivo adjunto
+app.delete("/api/v1/facturas-recibidas/:id/archivos/:filename", (req: Request, res: Response) => {
+  const rawFilename = req.params.filename;
+  // Prevent path traversal
+  if (!rawFilename || /[/\\]/.test(rawFilename) || rawFilename.startsWith("..")) {
+    return res.status(400).json({ error: "Nombre de archivo inválido" });
+  }
+  const filePath = path.join(
+    __dirname, "..", "uploads", "facturas-recibidas",
+    req.params.id, rawFilename
+  );
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: "Archivo no encontrado" });
+  }
+  try {
+    fs.unlinkSync(filePath);
+    res.json({ message: "Archivo eliminado" });
+  } catch (error: any) {
+    res.status(500).json({ error: "Error al eliminar archivo", details: error.message });
   }
 });
 

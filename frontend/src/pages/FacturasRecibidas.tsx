@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Receipt, Search, Plus, Edit2, Trash2, X, CheckCircle, Clock, AlertTriangle, Eye, Filter } from 'lucide-react';
+import { Receipt, Search, Plus, Edit2, Trash2, X, CheckCircle, Clock, AlertTriangle, Eye, Filter, Paperclip, FileText, Upload } from 'lucide-react';
 
 const COLOR = '#d4a574';
 
@@ -64,6 +64,11 @@ export default function FacturasRecibidas() {
   const [editingFactura, setEditingFactura] = useState<FacturaRecibida | null>(null);
   const [detailFactura, setDetailFactura] = useState<FacturaRecibida | null>(null);
   const [formData, setFormData] = useState({ ...emptyForm });
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [detailArchivos, setDetailArchivos] = useState<{nombre: string; filename: string; size: number; url: string}[]>([]);
+  const [loadingArchivos, setLoadingArchivos] = useState(false);
 
   const fetchFacturas = useCallback(async () => {
     try {
@@ -132,6 +137,7 @@ export default function FacturasRecibidas() {
   const handleCreate = () => {
     setEditingFactura(null);
     setFormData({ ...emptyForm });
+    setSelectedFiles([]);
     setShowModal(true);
   };
 
@@ -148,18 +154,15 @@ export default function FacturasRecibidas() {
       importe_total: String(factura.importe_total ?? ''),
       notas: factura.notas || '',
     });
+    setSelectedFiles([]);
     setShowModal(true);
-  };
-
-  const handleViewDetail = (factura: FacturaRecibida) => {
-    setDetailFactura(factura);
-    setShowDetailModal(true);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingFactura(null);
     setFormData({ ...emptyForm });
+    setSelectedFiles([]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -189,6 +192,21 @@ export default function FacturasRecibidas() {
       });
 
       if (response.ok) {
+        const saved = await response.json();
+        // Upload attached files if any
+        if (selectedFiles.length > 0) {
+          const fd = new FormData();
+          selectedFiles.forEach((f) => fd.append('archivos', f));
+          try {
+            await fetch(`http://localhost:3000/api/v1/facturas-recibidas/${saved.id}/archivos`, {
+              method: 'POST',
+              body: fd,
+            });
+          } catch (uploadErr) {
+            console.error('Error uploading files:', uploadErr);
+            alert(t('facturasRecibidas.errorArchivos', 'Error al subir archivos adjuntos'));
+          }
+        }
         handleCloseModal();
         fetchFacturas();
       } else {
@@ -235,6 +253,65 @@ export default function FacturasRecibidas() {
       console.error('Error deleting factura:', error);
       alert(t('facturasRecibidas.errorDelete', 'Error al eliminar factura'));
     }
+  };
+
+  // --- File handling ---
+  const addFiles = (newFiles: FileList | File[]) => {
+    const pdfFiles = Array.from(newFiles).filter(
+      (f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')
+    );
+    if (pdfFiles.length < Array.from(newFiles).length) {
+      alert(t('facturasRecibidas.solopdf', 'Solo se permiten archivos PDF'));
+    }
+    setSelectedFiles((prev) => {
+      // Use name + '|' + size as key (pipe separator avoids concatenation collisions)
+      const existing = new Set(prev.map((f) => `${f.name}|${f.size}`));
+      return [...prev, ...pdfFiles.filter((f) => !existing.has(`${f.name}|${f.size}`))];
+    });
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) addFiles(e.target.files);
+    e.target.value = '';
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (e.dataTransfer.files) addFiles(e.dataTransfer.files);
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  // Load files for detail modal
+  const loadDetailArchivos = useCallback(async (facturaId: number) => {
+    setLoadingArchivos(true);
+    try {
+      const res = await fetch(`http://localhost:3000/api/v1/facturas-recibidas/${facturaId}/archivos`);
+      if (res.ok) {
+        const data = await res.json();
+        setDetailArchivos(data);
+      }
+    } catch {
+      setDetailArchivos([]);
+    } finally {
+      setLoadingArchivos(false);
+    }
+  }, []);
+
+  const handleViewDetail = (factura: FacturaRecibida) => {
+    setDetailFactura(factura);
+    setDetailArchivos([]);
+    setShowDetailModal(true);
+    loadDetailArchivos(factura.id);
   };
 
   // --- Stats ---
@@ -586,6 +663,37 @@ export default function FacturasRecibidas() {
                   <p className="text-sm text-gray-900 dark:text-white mt-1 bg-gray-50 dark:bg-gray-700 p-2 rounded">{detailFactura.notas}</p>
                 </div>
               )}
+
+              {/* Attached files */}
+              <hr className="border-gray-200 dark:border-gray-700" />
+              <div>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1 mb-2">
+                  <Paperclip className="w-4 h-4" />
+                  {t('facturasRecibidas.verArchivos', 'Archivos adjuntos')}
+                </span>
+                {loadingArchivos ? (
+                  <p className="text-sm text-gray-400">{t('common.loading', 'Cargando...')}</p>
+                ) : detailArchivos.length === 0 ? (
+                  <p className="text-sm text-gray-400 italic">{t('facturasRecibidas.sinArchivos', 'Sin archivos adjuntos')}</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {detailArchivos.map((archivo, idx) => (
+                      <li key={idx} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2">
+                        <FileText className="w-4 h-4 text-red-500 shrink-0" />
+                        <a
+                          href={`http://localhost:3000${archivo.url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 dark:text-blue-400 hover:underline truncate flex-1"
+                        >
+                          {archivo.nombre}
+                        </a>
+                        <span className="text-xs text-gray-400 shrink-0">({formatFileSize(archivo.size)})</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
             <div className="flex justify-end gap-3 px-6 pb-6">
               {detailFactura.estado !== 'pagada' && (
@@ -759,6 +867,68 @@ export default function FacturasRecibidas() {
                     placeholder={t('facturasRecibidas.notasPlaceholder', 'Observaciones adicionales...')}
                   />
                 </div>
+              </div>
+
+              {/* PDF file attachment zone */}
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <span className="flex items-center gap-1">
+                    <Paperclip className="w-4 h-4" />
+                    {t('facturasRecibidas.adjuntarArchivos', 'Adjuntar archivos PDF')}
+                  </span>
+                </label>
+
+                {/* Drop zone */}
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                  onDragLeave={() => setIsDragOver(false)}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-lg p-5 text-center cursor-pointer transition-colors ${
+                    isDragOver
+                      ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/20'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-orange-300 dark:hover:border-orange-500 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                  }`}
+                >
+                  <Upload className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {t('facturasRecibidas.adjuntarHint', 'Arrastra y suelta archivos PDF o haz clic para seleccionar')}
+                  </p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,application/pdf"
+                    multiple
+                    className="hidden"
+                    onChange={handleFileInputChange}
+                  />
+                </div>
+
+                {/* Selected files list */}
+                {selectedFiles.length > 0 && (
+                  <ul className="mt-3 space-y-2">
+                    {selectedFiles.map((file, idx) => (
+                      <li
+                        key={idx}
+                        className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="w-4 h-4 text-red-500 shrink-0" />
+                          <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{file.name}</span>
+                          <span className="text-xs text-gray-400 shrink-0">({formatFileSize(file.size)})</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeFile(idx)}
+                          className="ml-2 p-1 text-gray-400 hover:text-red-500 transition-colors shrink-0"
+                          title={t('common.delete', 'Eliminar')}
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
 
               <div className="flex justify-end space-x-3 pt-4">

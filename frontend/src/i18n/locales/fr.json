@@ -98,7 +98,17 @@
     "colIva": "TVA",
     "colTotal": "Total",
     "colEstado": "Statut",
-    "colAcciones": "Actions"
+    "colAcciones": "Actions",
+    "adjuntarArchivos": "Joindre des fichiers PDF",
+    "adjuntarHint": "Glissez-déposez des fichiers PDF ou cliquez pour sélectionner",
+    "adjuntarSoloCrear": "Les fichiers ne peuvent être joints que lors de la création de la facture",
+    "archivosSeleccionados": "Fichiers sélectionnés",
+    "archivoAdjunto": "fichier joint",
+    "archivosAdjuntos": "fichiers joints",
+    "sinArchivos": "Aucun fichier joint",
+    "verArchivos": "Voir les fichiers joints",
+    "errorArchivos": "Erreur lors du téléchargement des fichiers joints",
+    "solopdf": "Seuls les fichiers PDF sont autorisés"
   },
   "common": {
     "save": "Enregistrer",

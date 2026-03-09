@@ -98,7 +98,17 @@
     "colIva": "VAT",
     "colTotal": "Total",
     "colEstado": "Status",
-    "colAcciones": "Actions"
+    "colAcciones": "Actions",
+    "adjuntarArchivos": "Attach PDF files",
+    "adjuntarHint": "Drag and drop PDF files or click to select",
+    "adjuntarSoloCrear": "Files can only be attached when creating the invoice",
+    "archivosSeleccionados": "Selected files",
+    "archivoAdjunto": "attached file",
+    "archivosAdjuntos": "attached files",
+    "sinArchivos": "No attached files",
+    "verArchivos": "View attached files",
+    "errorArchivos": "Error uploading attached files",
+    "solopdf": "Only PDF files are allowed"
   },
   "common": {
     "save": "Save",

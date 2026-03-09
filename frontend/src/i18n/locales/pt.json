@@ -98,7 +98,17 @@
     "colIva": "IVA",
     "colTotal": "Total",
     "colEstado": "Estado",
-    "colAcciones": "Ações"
+    "colAcciones": "Ações",
+    "adjuntarArchivos": "Anexar arquivos PDF",
+    "adjuntarHint": "Arraste e solte arquivos PDF ou clique para selecionar",
+    "adjuntarSoloCrear": "Os arquivos só podem ser anexados ao criar a fatura",
+    "archivosSeleccionados": "Arquivos selecionados",
+    "archivoAdjunto": "arquivo anexado",
+    "archivosAdjuntos": "arquivos anexados",
+    "sinArchivos": "Sem arquivos anexados",
+    "verArchivos": "Ver arquivos anexados",
+    "errorArchivos": "Erro ao enviar arquivos anexados",
+    "solopdf": "Apenas arquivos PDF são permitidos"
   },
   "common": {
     "save": "Salvar",

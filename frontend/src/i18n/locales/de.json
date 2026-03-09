@@ -98,7 +98,17 @@
     "colIva": "MwSt.",
     "colTotal": "Gesamt",
     "colEstado": "Status",
-    "colAcciones": "Aktionen"
+    "colAcciones": "Aktionen",
+    "adjuntarArchivos": "PDF-Dateien anhängen",
+    "adjuntarHint": "PDF-Dateien per Drag & Drop oder Klicken zum Auswählen",
+    "adjuntarSoloCrear": "Dateien können nur beim Erstellen der Rechnung angehängt werden",
+    "archivosSeleccionados": "Ausgewählte Dateien",
+    "archivoAdjunto": "angehängte Datei",
+    "archivosAdjuntos": "angehängte Dateien",
+    "sinArchivos": "Keine angehängten Dateien",
+    "verArchivos": "Angehängte Dateien ansehen",
+    "errorArchivos": "Fehler beim Hochladen der angehängten Dateien",
+    "solopdf": "Nur PDF-Dateien sind erlaubt"
   },
   "common": {
     "save": "Speichern",
