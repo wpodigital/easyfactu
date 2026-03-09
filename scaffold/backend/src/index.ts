@@ -45,6 +45,33 @@ const uploadArchivos = multer({
   limits: { fileSize: 20 * 1024 * 1024, files: 10 }, // 20 MB per file, max 10 files
 });
 
+// ─────────────────────────────────────────────
+// CORS – allow the Vite dev-server (and any configured origin) to reach the API
+// ─────────────────────────────────────────────
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGIN || "http://localhost:5173,http://localhost:5174,http://localhost:4173")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const origin = req.headers.origin as string | undefined;
+  const originAllowed = Boolean(origin && ALLOWED_ORIGINS.includes(origin));
+
+  if (originAllowed) {
+    res.setHeader("Access-Control-Allow-Origin", origin as string);
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+  }
+
+  // Only acknowledge preflight for allowed origins to avoid leaking headers to others
+  if (req.method === "OPTIONS") {
+    res.sendStatus(originAllowed ? 204 : 403);
+    return;
+  }
+  next();
+});
+
 app.use(express.json());
 app.use(express.text({ type: "application/xml" }));
 
