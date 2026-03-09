@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Users,
+  Truck,
   Plus,
   Search,
   Edit,
@@ -111,43 +112,47 @@ export const Clientes: React.FC = () => {
 
   return (
     <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto p-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-              <div
-                className="w-12 h-12 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: '#3e5874' }}
-              >
-                <Users className="w-6 h-6 text-white" />
+        <div className="bg-white dark:bg-gray-800 shadow">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-[#3e5874] rounded-lg">
+                <Users className="h-8 w-8 text-white" />
               </div>
-              {t('clientes.title')}
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
-              {t('clientes.subtitle')}
-            </p>
-          </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                {t('clientes.title')}
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {t('clientes.subtitle')}
+              </p>
+            </div>
+            </div>
           <button
             onClick={handleCreate}
-            className="flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium transition-colors"
+            className="flex items-center space-x-2 px-4 py-2 bg-[#3a6a82] text-white rounded-lg hover:bg-[#2d5366] transition-colors"
             style={{ backgroundColor: '#2d3e50' }}
           >
             <Plus className="w-5 h-5" />
-            {t('clientes.addNew')}
+            <span>{t('clientes.addNew')}</span>
           </button>
+          </div>
+          </div>
         </div>
 
+        {/* Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search */}
         <div className="mb-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
               placeholder={t('clientes.search')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#3a6a82] focus:border-transparent dark:bg-gray-700 dark:text-white"
             />
           </div>
         </div>
@@ -156,11 +161,12 @@ export const Clientes: React.FC = () => {
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white mx-auto"></div>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">{t('common.loading', 'Cargando...')}</p>
           </div>
         ) : clientes.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg">
-            <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-400 text-lg">
+          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
+            <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-400 mt-4">
               {t('clientes.noClientes')}
             </p>
           </div>
@@ -236,7 +242,8 @@ export const Clientes: React.FC = () => {
             ))}
           </div>
         )}
-
+        </div>
+        
         {/* Modal Form */}
         {showModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -417,6 +424,5 @@ export const Clientes: React.FC = () => {
           </div>
         )}
       </div>
-    </div>
   );
 };
