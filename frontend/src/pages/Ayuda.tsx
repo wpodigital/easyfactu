@@ -190,24 +190,7 @@ export default function Ayuda() {
                 </p>
               </div>
             </a>
-            <a
-              href="https://github.com/wpodigital/easyfactu"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-5 hover:shadow-md transition-shadow group"
-            >
-              <div className="p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: `${COLOR}20` }}>
-                <BookOpen className="h-6 w-6" style={{ color: COLOR }} />
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900 dark:text-white group-hover:underline">
-                  {t('ayuda.contact.repoLabel')}
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {t('ayuda.contact.repoDesc')}
-                </p>
-              </div>
-            </a>
+
           </div>
         </section>
 

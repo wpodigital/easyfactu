@@ -241,9 +241,7 @@
     "contact": {
       "docsLabel": "Documentação AEAT",
       "docsUrl": "https://www.agenciatributaria.es/",
-      "docsDesc": "Portal oficial da Agência Tributária para informações sobre VeriFactu",
-      "repoLabel": "Repositório GitHub",
-      "repoDesc": "Código-fonte e relatório de problemas"
+      "docsDesc": "Portal oficial da Agência Tributária para informações sobre VeriFactu"
     },
     "version": {
       "appVersion": "Versão do aplicativo",
