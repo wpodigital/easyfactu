@@ -118,7 +118,7 @@ export const Clientes: React.FC = () => {
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
               <div
                 className="w-12 h-12 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: '#2d3e50' }}
+                style={{ backgroundColor: '#3e5874' }}
               >
                 <Users className="w-6 h-6 text-white" />
               </div>
@@ -140,7 +140,7 @@ export const Clientes: React.FC = () => {
 
         {/* Search */}
         <div className="mb-6">
-          <div className="relative max-w-md">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
