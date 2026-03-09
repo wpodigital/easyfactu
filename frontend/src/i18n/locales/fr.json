@@ -278,5 +278,22 @@
     "ivaNegativo": "TVA à récupérer du Fisc",
     "disclaimer": "⚠️ Ce résumé est indicatif. Consultez un conseiller fiscal pour votre déclaration officielle.",
     "kpiTitle": "Indicateurs Clés"
+  },
+  "auth": {
+    "subtitle": "Système de Facturation VeriFactu",
+    "loginTab": "Se connecter",
+    "registerTab": "Configuration initiale",
+    "nombre": "Nom complet",
+    "nombrePlaceholder": "Votre nom complet",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "passwordHint": "Au moins 8 caractères",
+    "loginBtn": "Se connecter",
+    "registerBtn": "Créer un compte",
+    "registerNote": "L'inscription n'est disponible que pour le premier administrateur.",
+    "logout": "Se déconnecter",
+    "userMenu": "Menu de l'utilisateur",
+    "errorGeneric": "Échec de la connexion. Vérifiez vos identifiants.",
+    "errorConnection": "Impossible de se connecter au serveur."
   }
 }

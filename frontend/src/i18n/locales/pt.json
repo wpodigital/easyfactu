@@ -278,5 +278,22 @@
     "ivaNegativo": "IVA a recuperar da Fazenda",
     "disclaimer": "⚠️ Este resumo é orientativo. Consulte um consultor fiscal para sua declaração oficial.",
     "kpiTitle": "Indicadores Chave"
+  },
+  "auth": {
+    "subtitle": "Sistema de Faturação VeriFactu",
+    "loginTab": "Iniciar sessão",
+    "registerTab": "Registo inicial",
+    "nombre": "Nome completo",
+    "nombrePlaceholder": "O seu nome completo",
+    "email": "Endereço de e-mail",
+    "password": "Palavra-passe",
+    "passwordHint": "Mínimo 8 caracteres",
+    "loginBtn": "Entrar",
+    "registerBtn": "Criar conta",
+    "registerNote": "O registo só está disponível para o primeiro administrador.",
+    "logout": "Terminar sessão",
+    "userMenu": "Menu do utilizador",
+    "errorGeneric": "Erro ao iniciar sessão. Verifique as suas credenciais.",
+    "errorConnection": "Não foi possível conectar ao servidor."
   }
 }

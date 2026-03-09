@@ -278,5 +278,22 @@
     "ivaNegativo": "MwSt vom Finanzamt zurückzufordern",
     "disclaimer": "⚠️ Diese Zusammenfassung dient nur zur Orientierung. Konsultieren Sie einen Steuerberater für Ihre offizielle Erklärung.",
     "kpiTitle": "Wichtige Kennzahlen"
+  },
+  "auth": {
+    "subtitle": "VeriFactu Rechnungssystem",
+    "loginTab": "Anmelden",
+    "registerTab": "Ersteinrichtung",
+    "nombre": "Vollständiger Name",
+    "nombrePlaceholder": "Ihr vollständiger Name",
+    "email": "E-Mail-Adresse",
+    "password": "Passwort",
+    "passwordHint": "Mindestens 8 Zeichen",
+    "loginBtn": "Anmelden",
+    "registerBtn": "Konto erstellen",
+    "registerNote": "Die Registrierung ist nur für den ersten Administrator verfügbar.",
+    "logout": "Abmelden",
+    "userMenu": "Benutzermenü",
+    "errorGeneric": "Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Zugangsdaten.",
+    "errorConnection": "Verbindung zum Server konnte nicht hergestellt werden."
   }
 }

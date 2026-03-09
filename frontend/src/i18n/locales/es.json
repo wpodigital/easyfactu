@@ -270,7 +270,6 @@
     }
   },
   "renta": {
-    "title": "Declaración de Renta",
     "subtitle": "Resumen fiscal basado en tus facturas emitidas y recibidas",
     "year": "Año fiscal",
     "loading": "Cargando resumen fiscal...",
@@ -298,5 +297,22 @@
     "ivaNegativo": "IVA a recuperar de Hacienda",
     "disclaimer": "⚠️ Este resumen es orientativo. Consulta con un asesor fiscal para tu declaración oficial.",
     "kpiTitle": "Indicadores Clave"
+  },
+  "auth": {
+    "subtitle": "Sistema de Facturación VeriFactu",
+    "loginTab": "Iniciar sesión",
+    "registerTab": "Registro inicial",
+    "nombre": "Nombre completo",
+    "nombrePlaceholder": "Tu nombre y apellidos",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "passwordHint": "Mínimo 8 caracteres",
+    "loginBtn": "Entrar",
+    "registerBtn": "Crear cuenta",
+    "registerNote": "El registro solo está disponible para el primer administrador.",
+    "logout": "Cerrar sesión",
+    "userMenu": "Menú de usuario",
+    "errorGeneric": "Error al iniciar sesión. Comprueba tus credenciales.",
+    "errorConnection": "No se pudo conectar con el servidor."
   }
 }

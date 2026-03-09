@@ -278,5 +278,22 @@
     "ivaNegativo": "VAT to recover from Tax Authority",
     "disclaimer": "⚠️ This summary is for guidance only. Consult a tax advisor for your official declaration.",
     "kpiTitle": "Key Indicators"
+  },
+  "auth": {
+    "subtitle": "VeriFactu Invoicing System",
+    "loginTab": "Log in",
+    "registerTab": "Initial setup",
+    "nombre": "Full name",
+    "nombrePlaceholder": "Your full name",
+    "email": "Email address",
+    "password": "Password",
+    "passwordHint": "At least 8 characters",
+    "loginBtn": "Log in",
+    "registerBtn": "Create account",
+    "registerNote": "Registration is only available for the first administrator.",
+    "logout": "Log out",
+    "userMenu": "User menu",
+    "errorGeneric": "Login failed. Please check your credentials.",
+    "errorConnection": "Could not connect to the server."
   }
 }

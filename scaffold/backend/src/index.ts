@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import { testConnection, initializeDatabase, closePool } from "./config/database";
 import { facturasRepository, CreateFacturaParams } from "./repositories/facturas.repository";
 import { ClientesRepository, CreateClienteParams, UpdateClienteParams } from "./repositories/clientes.repository";
@@ -6,10 +6,13 @@ import { proveedoresRepository, CreateProveedorParams } from "./repositories/pro
 import { facturasRecibidasRepository } from "./repositories/facturas_recibidas.repository";
 import { configuracionRepository } from "./repositories/configuracion.repository";
 import { certificadosRepository } from "./repositories/certificados.repository";
+import { usuariosRepository } from "./repositories/usuarios.repository";
 import multer from "multer";
 import { pool } from "./config/database";
 import path from "path";
 import fs from "fs";
+import jwt from "jsonwebtoken";
+import rateLimit from "express-rate-limit";
 
 const clientesRepository = new ClientesRepository(pool);
 
@@ -44,6 +47,143 @@ const uploadArchivos = multer({
 
 app.use(express.json());
 app.use(express.text({ type: "application/xml" }));
+
+// ─────────────────────────────────────────────
+// JWT helpers
+// ─────────────────────────────────────────────
+const JWT_SECRET = process.env.JWT_SECRET || "easyfactu_dev_secret_change_in_production";
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "8h";
+
+interface JwtPayload {
+  userId: number;
+  email: string;
+  rol: string;
+}
+
+// Extend Express Request to carry the authenticated user
+declare global {
+  namespace Express {
+    interface Request {
+      user?: JwtPayload;
+    }
+  }
+}
+
+/**
+ * JWT authentication middleware – protects all /api/v1/ routes
+ * except /api/v1/auth/* which are public.
+ */
+function requireAuth(req: Request, res: Response, next: NextFunction): void {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    res.status(401).json({ error: "No autenticado. Inicia sesión." });
+    return;
+  }
+  const token = authHeader.slice(7);
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    req.user = decoded;
+    next();
+  } catch {
+    res.status(401).json({ error: "Token inválido o expirado. Inicia sesión de nuevo." });
+  }
+}
+
+// ─────────────────────────────────────────────
+// Auth endpoints (public – no JWT required)
+// ─────────────────────────────────────────────
+
+/** Rate limiter for auth endpoints: max 10 attempts per 15 minutes per IP */
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Demasiados intentos. Espera 15 minutos antes de volver a intentarlo." },
+});
+
+/**
+ * POST /api/v1/auth/login
+ * Authenticates a user and returns a JWT token.
+ */
+app.post("/api/v1/auth/login", authRateLimiter, async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body as { email?: string; password?: string };
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email y contraseña son obligatorios." });
+    }
+    const user = await usuariosRepository.findByEmail(email);
+    if (!user || !user.activo) {
+      return res.status(401).json({ error: "Credenciales incorrectas." });
+    }
+    const valid = await usuariosRepository.verifyPassword(password, user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: "Credenciales incorrectas." });
+    }
+    await usuariosRepository.updateLastAccess(user.id);
+    const payload: JwtPayload = { userId: user.id, email: user.email, rol: user.rol };
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions);
+    res.json({
+      token,
+      user: { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol },
+    });
+  } catch (error: any) {
+    console.error("Error in login:", error);
+    res.status(500).json({ error: "Error interno del servidor.", details: error.message });
+  }
+});
+
+/**
+ * POST /api/v1/auth/register
+ * Creates the first admin user. Disabled once a user already exists.
+ */
+app.post("/api/v1/auth/register", authRateLimiter, async (req: Request, res: Response) => {
+  try {
+    const total = await usuariosRepository.countAll();
+    if (total > 0) {
+      return res.status(403).json({ error: "El registro inicial ya se realizó. Contacta con el administrador." });
+    }
+    const { nombre, email, password } = req.body as { nombre?: string; email?: string; password?: string };
+    if (!nombre || !email || !password) {
+      return res.status(400).json({ error: "nombre, email y contraseña son obligatorios." });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ error: "La contraseña debe tener al menos 8 caracteres." });
+    }
+    const user = await usuariosRepository.create({ nombre, email, password, rol: "admin" });
+    const payload: JwtPayload = { userId: user.id, email: user.email, rol: user.rol };
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions);
+    res.status(201).json({
+      token,
+      user: { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol },
+    });
+  } catch (error: any) {
+    console.error("Error in register:", error);
+    if (error.code === "23505") {
+      return res.status(409).json({ error: "Este email ya está registrado." });
+    }
+    res.status(500).json({ error: "Error interno del servidor.", details: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/auth/me
+ * Returns the current authenticated user's info.
+ */
+app.get("/api/v1/auth/me", authRateLimiter, requireAuth, async (req: Request, res: Response) => {
+  try {
+    const user = await usuariosRepository.findById(req.user!.userId);
+    if (!user) return res.status(404).json({ error: "Usuario no encontrado." });
+    res.json({ user });
+  } catch (error: any) {
+    res.status(500).json({ error: "Error interno del servidor.", details: error.message });
+  }
+});
+
+// ─────────────────────────────────────────────
+// Protect all remaining /api/v1/ routes with JWT
+// ─────────────────────────────────────────────
+app.use("/api/v1/", requireAuth);
 
 /**
  * POST /api/v1/invoices
