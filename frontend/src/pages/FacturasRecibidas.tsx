@@ -131,16 +131,16 @@ export default function FacturasRecibidas() {
         fetchFacturas();
       } else {
         const err = await response.json();
-        alert(err.error || 'Error al guardar factura');
+        alert(err.error || t('facturasRecibidas.errorSave', 'Error al guardar factura'));
       }
     } catch (error) {
       console.error('Error saving factura:', error);
-      alert('Error al guardar factura');
+      alert(t('facturasRecibidas.errorSave', 'Error al guardar factura'));
     }
   };
 
   const handleMarkAsPaid = async (id: number) => {
-    if (!confirm('¿Estás seguro de marcar esta factura como pagada?')) return;
+    if (!confirm(t('facturasRecibidas.confirmMarkAsPaid', '¿Estás seguro de marcar esta factura como pagada?'))) return;
     try {
       const response = await fetch(
         `http://localhost:3000/api/v1/facturas-recibidas/${id}/pagar`,
@@ -149,16 +149,16 @@ export default function FacturasRecibidas() {
       if (response.ok) {
         fetchFacturas();
       } else {
-        alert('Error al marcar como pagada');
+        alert(t('facturasRecibidas.errorMarkAsPaid', 'Error al marcar como pagada'));
       }
     } catch (error) {
       console.error('Error marking as paid:', error);
-      alert('Error al marcar como pagada');
+      alert(t('facturasRecibidas.errorMarkAsPaid', 'Error al marcar como pagada'));
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('¿Estás seguro de eliminar esta factura?')) return;
+    if (!confirm(t('facturasRecibidas.confirmDelete', '¿Estás seguro de eliminar esta factura?'))) return;
     try {
       const response = await fetch(
         `http://localhost:3000/api/v1/facturas-recibidas/${id}`,
@@ -167,11 +167,11 @@ export default function FacturasRecibidas() {
       if (response.ok) {
         fetchFacturas();
       } else {
-        alert('Error al eliminar factura');
+        alert(t('facturasRecibidas.errorDelete', 'Error al eliminar factura'));
       }
     } catch (error) {
       console.error('Error deleting factura:', error);
-      alert('Error al eliminar factura');
+      alert(t('facturasRecibidas.errorDelete', 'Error al eliminar factura'));
     }
   };
 
@@ -199,14 +199,14 @@ export default function FacturasRecibidas() {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
           <CheckCircle className="w-3 h-3" />
-          Pagada
+          {t('facturasRecibidas.estadoPagada', 'Pagada')}
         </span>
       );
     }
     return (
       <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
         <Clock className="w-3 h-3" />
-        Pendiente
+        {t('facturasRecibidas.estadoPendiente', 'Pendiente')}
       </span>
     );
   };
@@ -237,7 +237,7 @@ export default function FacturasRecibidas() {
             style={{ backgroundColor: COLOR }}
           >
             <Plus className="w-5 h-5" />
-            Nueva Factura
+            {t('facturasRecibidas.new', 'Nueva Factura')}
           </button>
         </div>
         </div>
@@ -250,7 +250,7 @@ export default function FacturasRecibidas() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Buscar por número, proveedor o estado..."
+              placeholder={t('facturasRecibidas.search', 'Buscar por número, proveedor o estado...')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-300"
@@ -266,18 +266,18 @@ export default function FacturasRecibidas() {
                 className="animate-spin rounded-full h-10 w-10 border-b-2 mx-auto mb-4"
                 style={{ borderColor: COLOR }}
               />
-              <p className="text-gray-500 dark:text-gray-400">Cargando facturas...</p>
+              <p className="text-gray-500 dark:text-gray-400">{t('facturasRecibidas.loading', 'Cargando facturas...')}</p>
             </div>
           ) : filtered.length === 0 ? (
             <div className="p-12 text-center">
               <Receipt className="w-12 h-12 mx-auto mb-4" style={{ color: COLOR, opacity: 0.3 }} />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                {searchTerm ? 'No se encontraron resultados' : 'No hay facturas recibidas'}
+                {searchTerm ? t('facturasRecibidas.noResults', 'No se encontraron resultados') : t('facturasRecibidas.empty', 'No hay facturas recibidas')}
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
                 {searchTerm
-                  ? 'Prueba con otros términos de búsqueda'
-                  : 'Crea tu primera factura recibida'}
+                  ? t('facturasRecibidas.noResultsHint', 'Prueba con otros términos de búsqueda')
+                  : t('facturasRecibidas.emptyHint', 'Crea tu primera factura recibida')}
               </p>
             </div>
           ) : (
@@ -285,15 +285,15 @@ export default function FacturasRecibidas() {
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Numero</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Proveedor</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Fecha</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Vencimiento</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Base</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">IVA</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Estado</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Acciones</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('facturasRecibidas.colNumero', 'Número')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('facturasRecibidas.colProveedor', 'Proveedor')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('facturasRecibidas.colFecha', 'Fecha')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('facturasRecibidas.colVencimiento', 'Vencimiento')}</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('facturasRecibidas.colBase', 'Base')}</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('facturasRecibidas.colIva', 'IVA')}</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('facturasRecibidas.colTotal', 'Total')}</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('facturasRecibidas.colEstado', 'Estado')}</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('facturasRecibidas.colAcciones', 'Acciones')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -329,7 +329,7 @@ export default function FacturasRecibidas() {
                             <button
                               onClick={() => handleMarkAsPaid(factura.id)}
                               className="p-1 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 transition-colors"
-                              title="Marcar como pagada"
+                             title={t('facturasRecibidas.markAsPaid', 'Marcar como pagada')}
                             >
                               <CheckCircle className="w-4 h-4" />
                             </button>
@@ -337,14 +337,14 @@ export default function FacturasRecibidas() {
                           <button
                             onClick={() => handleEdit(factura)}
                             className="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                            title="Editar"
+                            title={t('common.edit', 'Editar')}
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(factura.id)}
                             className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors"
-                            title="Eliminar"
+                            title={t('common.delete', 'Eliminar')}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -365,7 +365,7 @@ export default function FacturasRecibidas() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b dark:border-gray-700">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {editingFactura ? 'Editar Factura Recibida' : 'Nueva Factura Recibida'}
+                {editingFactura ? t('facturasRecibidas.edit', 'Editar Factura Recibida') : t('facturasRecibidas.new', 'Nueva Factura Recibida')}
               </h2>
               <button
                 onClick={handleCloseModal}
@@ -379,7 +379,7 @@ export default function FacturasRecibidas() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Número de Factura *
+                    {t('facturasRecibidas.numeroFactura', 'Número de Factura')} *
                   </label>
                   <input
                     type="text"
@@ -387,20 +387,20 @@ export default function FacturasRecibidas() {
                     value={formData.numero_factura}
                     onChange={(e) => setFormData({ ...formData, numero_factura: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                    placeholder="Ej. FAC-2026-001"
+                    placeholder={t('facturasRecibidas.numeroPlaceholder', 'Ej. FAC-2026-001')}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Proveedor
+                    {t('facturasRecibidas.proveedor', 'Proveedor')}
                   </label>
                   <select
                     value={formData.proveedor_id}
                     onChange={(e) => setFormData({ ...formData, proveedor_id: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
                   >
-                    <option value="">Seleccionar proveedor</option>
+                    <option value="">{t('facturasRecibidas.selectProveedor', 'Seleccionar proveedor')}</option>
                     {proveedores.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.nombre_razon_social}
@@ -411,7 +411,7 @@ export default function FacturasRecibidas() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Fecha Factura *
+                    {t('facturasRecibidas.fechaFactura', 'Fecha Factura')} *
                   </label>
                   <input
                     type="date"
@@ -424,7 +424,7 @@ export default function FacturasRecibidas() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Fecha Vencimiento
+                    {t('facturasRecibidas.fechaVencimiento', 'Fecha Vencimiento')}
                   </label>
                   <input
                     type="date"
@@ -436,7 +436,7 @@ export default function FacturasRecibidas() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Base Imponible (EUR)
+                    {t('facturasRecibidas.baseImponible', 'Base Imponible (EUR)')}
                   </label>
                   <input
                     type="number"
@@ -451,7 +451,7 @@ export default function FacturasRecibidas() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    IVA (EUR)
+                    {t('facturasRecibidas.iva', 'IVA (EUR)')}
                   </label>
                   <input
                     type="number"
@@ -468,7 +468,7 @@ export default function FacturasRecibidas() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     <span className="flex items-center gap-1">
                       <Euro className="w-4 h-4" />
-                      Importe Total *
+                      {t('facturasRecibidas.importeTotal', 'Importe Total')} *
                     </span>
                   </label>
                   <input
@@ -485,14 +485,14 @@ export default function FacturasRecibidas() {
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Notas
+                    {t('facturasRecibidas.notas', 'Notas')}
                   </label>
                   <textarea
                     rows={3}
                     value={formData.notas}
                     onChange={(e) => setFormData({ ...formData, notas: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white resize-none"
-                    placeholder="Observaciones adicionales..."
+                    placeholder={t('facturasRecibidas.notasPlaceholder', 'Observaciones adicionales...')}
                   />
                 </div>
               </div>
