@@ -187,5 +187,98 @@
     "loading": "Laden...",
     "underConstruction": "In Bearbeitung",
     "backToDashboard": "Zurück zum Dashboard"
+  },
+  "ayuda": {
+    "title": "Hilfe & Support",
+    "subtitle": "Finden Sie Antworten auf Ihre Fragen und lernen Sie EasyFactu zu verwenden",
+    "faqTitle": "Häufig Gestellte Fragen",
+    "guidesTitle": "Schnellanleitungen",
+    "contactTitle": "Kontakt & Support",
+    "versionTitle": "Versionsinformationen",
+    "searchPlaceholder": "Hilfe durchsuchen...",
+    "noResults": "Keine Ergebnisse für Ihre Suche gefunden",
+    "faq": {
+      "q1": "Was ist VeriFactu?",
+      "a1": "VeriFactu ist das Rechnungsverifizierungssystem der spanischen Steuerbehörde (AEAT). EasyFactu implementiert diesen Standard, um sicherzustellen, dass alle Ihre Rechnungen den aktuellen Steuervorschriften entsprechen.",
+      "q2": "Wie erstelle ich meine erste ausgestellte Rechnung?",
+      "a2": "Gehen Sie zu 'Ausgestellte Rechnungen' und klicken Sie auf 'Neue Rechnung'. Füllen Sie die Seriennummer, Steuernummer, Name des Ausstellers, Datum, Rechnungstyp und Beträge aus. Die MwSt-Quote wird automatisch berechnet.",
+      "q3": "Wie erfasse ich eine erhaltene Rechnung?",
+      "a3": "Gehen Sie zu 'Erhaltene Rechnungen' und klicken Sie auf 'Neue Rechnung'. Wählen Sie den Lieferanten, geben Sie die Rechnungsdaten ein und hängen Sie optional das PDF an. Überfällige Rechnungen werden rot hervorgehoben.",
+      "q4": "Was bewirkt 'An AEAT senden'?",
+      "a4": "Diese Aktion sendet die Rechnung zur offiziellen Validierung an das AEAT-Registrierungssystem. Nach der Validierung erhalten Sie einen CSV (Sicherheitsverifizierungscode), der die Rechnung zertifiziert.",
+      "q5": "Wie installiere ich mein digitales Zertifikat?",
+      "a5": "Gehen Sie zu 'Einstellungen' → Registerkarte 'Zertifikate'. Ziehen Sie Ihre .p12-Datei in den Upload-Bereich, geben Sie das Passwort ein und klicken Sie auf 'Hochladen'. Aktivieren Sie es dann für die Kommunikation mit der AEAT.",
+      "q6": "Welche Rechnungstypen gibt es?",
+      "a6": "F1: Vollständige Rechnung (Standard). F2: Vereinfacht (Quittungen). R1-R5: Berichtigungsrechnungen (Korrekturen früherer Rechnungen).",
+      "q7": "Kann ich die App in mehreren Sprachen verwenden?",
+      "a7": "Ja. EasyFactu ist auf Spanisch, Englisch, Portugiesisch, Französisch und Deutsch verfügbar. Ändern Sie die Sprache über den Selektor in der oberen Leiste.",
+      "q8": "Wie funktioniert die Steuerübersicht?",
+      "a8": "Der Einkommensteuer-Bereich aggregiert automatisch Daten aus Ihren ausgestellten und erhaltenen Rechnungen, um eine Übersicht über Einnahmen, Ausgaben, zu zahlende/erstattungsfähige MwSt und eine Schätzung des steuerlichen Ergebnisses anzuzeigen."
+    },
+    "guides": {
+      "g1Title": "Erste Schritte",
+      "g1Steps": [
+        "Konfigurieren Sie Ihre Unternehmensdaten in Einstellungen → Unternehmen",
+        "Fügen Sie Ihre Kunden im Bereich Kunden hinzu",
+        "Fügen Sie Ihre Lieferanten im Bereich Lieferanten hinzu",
+        "Stellen Sie Ihre erste Rechnung in Ausgestellte Rechnungen aus"
+      ],
+      "g2Title": "Rechnungsverwaltung",
+      "g2Steps": [
+        "Erstellen Sie Rechnungen mit einer eindeutigen Seriennummer (z.B. A-2026-001)",
+        "Wählen Sie den anwendbaren MwSt-Satz (0%, 4%, 10% oder 21%)",
+        "Verwenden Sie 'An AEAT senden', um jede Rechnung offiziell zu validieren",
+        "Laden Sie das Validierungs-CSV als Nachweis herunter"
+      ],
+      "g3Title": "Digitales Zertifikat",
+      "g3Steps": [
+        "Erhalten Sie Ihr .p12-Zertifikat von FNMT oder AEAT",
+        "Gehen Sie zu Einstellungen → Zertifikate",
+        "Laden Sie das Zertifikat mit Ihrem Passwort hoch",
+        "Aktivieren Sie es, um Kommunikationen mit der AEAT zu signieren"
+      ]
+    },
+    "contact": {
+      "docsLabel": "AEAT-Dokumentation",
+      "docsUrl": "https://www.agenciatributaria.es/",
+      "docsDesc": "Offizielles Portal der Steuerbehörde für Informationen über VeriFactu",
+      "repoLabel": "GitHub-Repository",
+      "repoDesc": "Quellcode und Fehlerbericht"
+    },
+    "version": {
+      "appVersion": "Anwendungsversion",
+      "buildDate": "Build-Datum",
+      "techStack": "Tech-Stack"
+    }
+  },
+  "renta": {
+    "title": "Steuererklärung",
+    "subtitle": "Steuerliche Zusammenfassung basierend auf Ihren ausgestellten und erhaltenen Rechnungen",
+    "year": "Steuerjahr",
+    "loading": "Steuerliche Zusammenfassung wird geladen...",
+    "noData": "Keine Daten für diesen Zeitraum",
+    "noDataHint": "Erstellen Sie ausgestellte und erhaltene Rechnungen, um Ihre steuerliche Zusammenfassung zu sehen",
+    "ingresos": "Einnahmen (Basis)",
+    "gastos": "Ausgaben (Basis)",
+    "resultado": "Nettoresultat",
+    "ivaRepercutido": "Ausgangs-MwSt",
+    "ivaSoportado": "Eingangs-MwSt",
+    "ivaLiquidar": "Zu zahlende MwSt",
+    "irpfEstimado": "Geschätzte Einkommensteuer (15%)",
+    "facturasEmitidas": "Ausgestellte Rechnungen",
+    "facturasRecibidas": "Erhaltene Rechnungen",
+    "facturasVencidas": "Überfällige Rechnungen",
+    "trimestralTitle": "Vierteljährliche Einnahmenaufschlüsselung",
+    "colTrimestre": "Quartal",
+    "colIngresos": "Basiseinnahmen",
+    "colIva": "Ausgangs-MwSt",
+    "colTotal": "Gesamt Fakturiert",
+    "resumenTitle": "Jahresübersicht",
+    "positivo": "Positives Ergebnis",
+    "negativo": "Negatives Ergebnis",
+    "ivaPositivo": "MwSt an Finanzamt zu zahlen",
+    "ivaNegativo": "MwSt vom Finanzamt zurückzufordern",
+    "disclaimer": "⚠️ Diese Zusammenfassung dient nur zur Orientierung. Konsultieren Sie einen Steuerberater für Ihre offizielle Erklärung.",
+    "kpiTitle": "Wichtige Kennzahlen"
   }
 }

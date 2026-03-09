@@ -187,5 +187,98 @@
     "loading": "Chargement...",
     "underConstruction": "En Construction",
     "backToDashboard": "Retour au Tableau de Bord"
+  },
+  "ayuda": {
+    "title": "Aide et Support",
+    "subtitle": "Trouvez des réponses à vos questions et apprenez à utiliser EasyFactu",
+    "faqTitle": "Questions Fréquentes",
+    "guidesTitle": "Guides Rapides",
+    "contactTitle": "Contact et Support",
+    "versionTitle": "Informations de Version",
+    "searchPlaceholder": "Rechercher dans l'aide...",
+    "noResults": "Aucun résultat trouvé pour votre recherche",
+    "faq": {
+      "q1": "Qu'est-ce que VeriFactu?",
+      "a1": "VeriFactu est le système de vérification des factures de l'Agence Fiscale espagnole (AEAT). EasyFactu implémente cette norme pour garantir que toutes vos factures sont conformes à la réglementation fiscale en vigueur.",
+      "q2": "Comment créer ma première facture émise?",
+      "a2": "Allez dans 'Factures Émises' et cliquez sur 'Nouvelle Facture'. Remplissez le numéro de série, NIF, nom de l'émetteur, date, type de facture et montants. La quote TVA est calculée automatiquement.",
+      "q3": "Comment enregistrer une facture reçue?",
+      "a3": "Allez dans 'Factures Reçues' et cliquez sur 'Nouvelle Facture'. Sélectionnez le fournisseur, saisissez les données de la facture et joignez optionnellement le PDF. Les factures en retard sont surlignées en rouge.",
+      "q4": "À quoi sert 'Envoyer à l'AEAT'?",
+      "a4": "Cette action envoie la facture au système d'enregistrement de l'AEAT pour validation officielle. Une fois validée, vous recevrez un CSV (Code de Sécurité de Vérification) qui certifie la facture.",
+      "q5": "Comment installer mon certificat numérique?",
+      "a5": "Allez dans 'Configuration' → onglet 'Certificats'. Faites glisser votre fichier .p12 dans la zone de téléchargement, entrez le mot de passe et cliquez sur 'Télécharger'. Puis activez-le pour l'utiliser dans les communications avec l'AEAT.",
+      "q6": "Quels types de factures existent?",
+      "a6": "F1: Facture complète (standard). F2: Simplifiée (reçus). R1-R5: Rectificatives (corrections de factures précédentes).",
+      "q7": "Puis-je utiliser l'application en plusieurs langues?",
+      "a7": "Oui. EasyFactu est disponible en Espagnol, Anglais, Portugais, Français et Allemand. Changez la langue depuis le sélecteur dans la barre supérieure.",
+      "q8": "Comment fonctionne le Résumé Fiscal?",
+      "a8": "La section Revenus agrège automatiquement les données de vos factures émises et reçues pour vous montrer un résumé des revenus, dépenses, TVA à payer/récupérer et une estimation du résultat fiscal."
+    },
+    "guides": {
+      "g1Title": "Premiers pas",
+      "g1Steps": [
+        "Configurez les données de votre entreprise dans Configuration → Entreprise",
+        "Ajoutez vos clients dans la section Clients",
+        "Ajoutez vos fournisseurs dans la section Fournisseurs",
+        "Émettez votre première facture dans Factures Émises"
+      ],
+      "g2Title": "Gestion des factures",
+      "g2Steps": [
+        "Créez des factures avec un numéro de série unique (ex. A-2026-001)",
+        "Sélectionnez le taux de TVA applicable (0%, 4%, 10% ou 21%)",
+        "Utilisez 'Envoyer à l'AEAT' pour valider chaque facture officiellement",
+        "Téléchargez le CSV de validation comme preuve"
+      ],
+      "g3Title": "Certificat numérique",
+      "g3Steps": [
+        "Obtenez votre certificat .p12 de la FNMT ou AEAT",
+        "Allez dans Configuration → Certificats",
+        "Téléchargez le certificat avec votre mot de passe",
+        "Activez-le pour signer les communications avec l'AEAT"
+      ]
+    },
+    "contact": {
+      "docsLabel": "Documentation AEAT",
+      "docsUrl": "https://www.agenciatributaria.es/",
+      "docsDesc": "Portail officiel de l'Agence Fiscale pour les informations sur VeriFactu",
+      "repoLabel": "Dépôt GitHub",
+      "repoDesc": "Code source et rapport d'incidents"
+    },
+    "version": {
+      "appVersion": "Version de l'application",
+      "buildDate": "Date de compilation",
+      "techStack": "Stack technique"
+    }
+  },
+  "renta": {
+    "title": "Déclaration de Revenus",
+    "subtitle": "Résumé fiscal basé sur vos factures émises et reçues",
+    "year": "Exercice fiscal",
+    "loading": "Chargement du résumé fiscal...",
+    "noData": "Aucune donnée pour cette période",
+    "noDataHint": "Créez des factures émises et reçues pour voir votre résumé fiscal",
+    "ingresos": "Revenus (Base)",
+    "gastos": "Dépenses (Base)",
+    "resultado": "Résultat Net",
+    "ivaRepercutido": "TVA Collectée",
+    "ivaSoportado": "TVA Déductible",
+    "ivaLiquidar": "TVA à Régler",
+    "irpfEstimado": "Impôt Estimé (15%)",
+    "facturasEmitidas": "Factures Émises",
+    "facturasRecibidas": "Factures Reçues",
+    "facturasVencidas": "Factures en Retard",
+    "trimestralTitle": "Ventilation Trimestrielle des Revenus",
+    "colTrimestre": "Trimestre",
+    "colIngresos": "Revenus de Base",
+    "colIva": "TVA Collectée",
+    "colTotal": "Total Facturé",
+    "resumenTitle": "Résumé de l'Exercice",
+    "positivo": "Résultat positif",
+    "negativo": "Résultat négatif",
+    "ivaPositivo": "TVA à verser au Fisc",
+    "ivaNegativo": "TVA à récupérer du Fisc",
+    "disclaimer": "⚠️ Ce résumé est indicatif. Consultez un conseiller fiscal pour votre déclaration officielle.",
+    "kpiTitle": "Indicateurs Clés"
   }
 }

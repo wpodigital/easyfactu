@@ -269,8 +269,13 @@ app.delete("/api/v1/invoices/:id", async (req: Request, res: Response) => {
  */
 app.get("/api/v1/invoices/stats", async (req: Request, res: Response) => {
   try {
-    const pool = (facturasRepository as any).pool;
-    const result = await pool.query(`
+    const rows = await facturasRepository.rawQuery<{
+      total: string;
+      anuladas: string;
+      validadas: string;
+      pendientes: string;
+      importe_total: string;
+    }>(`
       SELECT
         COUNT(*) AS total,
         COUNT(*) FILTER (WHERE estado_registro = 'Anulada') AS anuladas,
@@ -279,7 +284,7 @@ app.get("/api/v1/invoices/stats", async (req: Request, res: Response) => {
         COALESCE(SUM(importe_total) FILTER (WHERE estado_registro != 'Anulada'), 0) AS importe_total
       FROM facturas
     `);
-    const row = result.rows[0];
+    const row = rows[0];
     res.json({
       total: parseInt(row.total, 10),
       validadas: parseInt(row.validadas, 10),
@@ -412,6 +417,111 @@ app.post("/api/v1/invoices/import", async (req: Request, res: Response) => {
   } catch (error) {
     res.status(400).json({
       error: 'Invalid XML',
+      message: (error as Error).message,
+    });
+  }
+});
+
+// ===================================================================
+// Renta / Resumen Fiscal Endpoints
+// ===================================================================
+
+/**
+ * GET /api/v1/renta/resumen
+ * Aggregated fiscal summary from emitted and received invoices
+ */
+app.get("/api/v1/renta/resumen", async (req: Request, res: Response) => {
+  try {
+    const year = req.query.year ? parseInt(req.query.year as string, 10) : new Date().getFullYear();
+
+    type EmitidasRow = {
+      total_facturas: string;
+      ingresos_brutos: string;
+      iva_repercutido: string;
+      base_imponible_emitidas: string;
+      t1_base: string; t2_base: string; t3_base: string; t4_base: string;
+      t1_iva: string; t2_iva: string; t3_iva: string; t4_iva: string;
+    };
+    type RecibidasRow = {
+      total_facturas: string;
+      gastos_brutos: string;
+      iva_soportado: string;
+      base_imponible_recibidas: string;
+      facturas_vencidas: string;
+    };
+
+    // Emitted invoices aggregation (income)
+    const emitidasRows = await facturasRepository.rawQuery<EmitidasRow>(`
+      SELECT
+        COUNT(*) FILTER (WHERE estado_registro != 'Anulada') AS total_facturas,
+        COALESCE(SUM(importe_total) FILTER (WHERE estado_registro != 'Anulada'), 0) AS ingresos_brutos,
+        COALESCE(SUM(cuota_total) FILTER (WHERE estado_registro != 'Anulada'), 0) AS iva_repercutido,
+        COALESCE(SUM(importe_total - COALESCE(cuota_total, 0)) FILTER (WHERE estado_registro != 'Anulada'), 0) AS base_imponible_emitidas,
+        COALESCE(SUM(importe_total - COALESCE(cuota_total, 0)) FILTER (WHERE estado_registro != 'Anulada' AND EXTRACT(QUARTER FROM fecha_expedicion_factura) = 1 AND EXTRACT(YEAR FROM fecha_expedicion_factura) = $1), 0) AS t1_base,
+        COALESCE(SUM(importe_total - COALESCE(cuota_total, 0)) FILTER (WHERE estado_registro != 'Anulada' AND EXTRACT(QUARTER FROM fecha_expedicion_factura) = 2 AND EXTRACT(YEAR FROM fecha_expedicion_factura) = $1), 0) AS t2_base,
+        COALESCE(SUM(importe_total - COALESCE(cuota_total, 0)) FILTER (WHERE estado_registro != 'Anulada' AND EXTRACT(QUARTER FROM fecha_expedicion_factura) = 3 AND EXTRACT(YEAR FROM fecha_expedicion_factura) = $1), 0) AS t3_base,
+        COALESCE(SUM(importe_total - COALESCE(cuota_total, 0)) FILTER (WHERE estado_registro != 'Anulada' AND EXTRACT(QUARTER FROM fecha_expedicion_factura) = 4 AND EXTRACT(YEAR FROM fecha_expedicion_factura) = $1), 0) AS t4_base,
+        COALESCE(SUM(cuota_total) FILTER (WHERE estado_registro != 'Anulada' AND EXTRACT(QUARTER FROM fecha_expedicion_factura) = 1 AND EXTRACT(YEAR FROM fecha_expedicion_factura) = $1), 0) AS t1_iva,
+        COALESCE(SUM(cuota_total) FILTER (WHERE estado_registro != 'Anulada' AND EXTRACT(QUARTER FROM fecha_expedicion_factura) = 2 AND EXTRACT(YEAR FROM fecha_expedicion_factura) = $1), 0) AS t2_iva,
+        COALESCE(SUM(cuota_total) FILTER (WHERE estado_registro != 'Anulada' AND EXTRACT(QUARTER FROM fecha_expedicion_factura) = 3 AND EXTRACT(YEAR FROM fecha_expedicion_factura) = $1), 0) AS t3_iva,
+        COALESCE(SUM(cuota_total) FILTER (WHERE estado_registro != 'Anulada' AND EXTRACT(QUARTER FROM fecha_expedicion_factura) = 4 AND EXTRACT(YEAR FROM fecha_expedicion_factura) = $1), 0) AS t4_iva
+      FROM facturas
+      WHERE EXTRACT(YEAR FROM fecha_expedicion_factura) = $1
+    `, [year]);
+
+    // Received invoices aggregation (expenses)
+    const recibidasRows = await facturasRepository.rawQuery<RecibidasRow>(`
+      SELECT
+        COUNT(*) AS total_facturas,
+        COALESCE(SUM(importe_total), 0) AS gastos_brutos,
+        COALESCE(SUM(iva_total), 0) AS iva_soportado,
+        COALESCE(SUM(base_imponible), 0) AS base_imponible_recibidas,
+        COUNT(*) FILTER (WHERE estado = 'pendiente' AND fecha_vencimiento < NOW()) AS facturas_vencidas
+      FROM facturas_recibidas
+      WHERE EXTRACT(YEAR FROM fecha_factura) = $1
+    `, [year]);
+
+    const e = emitidasRows[0];
+    const r = recibidasRows[0];
+
+    const ingresosBrutos = parseFloat(e.ingresos_brutos);
+    const gastosBrutos = parseFloat(r.gastos_brutos);
+    const ivaRepercutido = parseFloat(e.iva_repercutido);
+    const ivaSoportado = parseFloat(r.iva_soportado);
+    const baseEmitidas = parseFloat(e.base_imponible_emitidas);
+    const baseRecibidas = parseFloat(r.base_imponible_recibidas);
+
+    const resultado = baseEmitidas - baseRecibidas;
+    const ivaLiquidar = ivaRepercutido - ivaSoportado;
+    // Estimated IRPF at 15% for freelancers (simplified)
+    const irpfEstimado = Math.max(0, resultado * 0.15);
+
+    res.json({
+      year,
+      resumen: {
+        ingresosBrutos,
+        gastosBrutos,
+        resultado,
+        ivaRepercutido,
+        ivaSoportado,
+        ivaLiquidar,
+        irpfEstimado,
+      },
+      facturas: {
+        emitidas: parseInt(e.total_facturas, 10),
+        recibidas: parseInt(r.total_facturas, 10),
+        vencidas: parseInt(r.facturas_vencidas, 10),
+      },
+      trimestres: [
+        { trimestre: 1, label: `T1 ${year}`, ingresos: parseFloat(e.t1_base), iva: parseFloat(e.t1_iva) },
+        { trimestre: 2, label: `T2 ${year}`, ingresos: parseFloat(e.t2_base), iva: parseFloat(e.t2_iva) },
+        { trimestre: 3, label: `T3 ${year}`, ingresos: parseFloat(e.t3_base), iva: parseFloat(e.t3_iva) },
+        { trimestre: 4, label: `T4 ${year}`, ingresos: parseFloat(e.t4_base), iva: parseFloat(e.t4_iva) },
+      ],
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Internal server error',
       message: (error as Error).message,
     });
   }

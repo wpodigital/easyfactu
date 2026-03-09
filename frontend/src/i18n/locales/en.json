@@ -187,5 +187,98 @@
     "loading": "Loading...",
     "underConstruction": "Under Construction",
     "backToDashboard": "Back to Dashboard"
+  },
+  "ayuda": {
+    "title": "Help & Support",
+    "subtitle": "Find answers to your questions and learn how to use EasyFactu",
+    "faqTitle": "Frequently Asked Questions",
+    "guidesTitle": "Quick Guides",
+    "contactTitle": "Contact & Support",
+    "versionTitle": "Version Information",
+    "searchPlaceholder": "Search help...",
+    "noResults": "No results found for your search",
+    "faq": {
+      "q1": "What is VeriFactu?",
+      "a1": "VeriFactu is the invoice verification system of the Spanish Tax Agency (AEAT). EasyFactu implements this standard to ensure all your invoices comply with current tax regulations.",
+      "q2": "How do I create my first issued invoice?",
+      "a2": "Go to 'Issued Invoices' and click 'New Invoice'. Fill in the series number, tax ID, issuer name, date, invoice type and amounts. The VAT quota is calculated automatically.",
+      "q3": "How do I record a received invoice?",
+      "a3": "Go to 'Received Invoices' and click 'New Invoice'. Select the supplier, enter the invoice data and optionally attach the PDF. Overdue invoices are highlighted in red.",
+      "q4": "What does 'Submit to AEAT' do?",
+      "a4": "This action sends the invoice to the AEAT registration system for official validation. Once validated, you will receive a CSV (Security Verification Code) that certifies the invoice.",
+      "q5": "How do I install my digital certificate?",
+      "a5": "Go to 'Settings' → 'Certificates' tab. Drag your .p12 file to the upload area, enter the password and click 'Upload'. Then activate it to use it in communications with AEAT.",
+      "q6": "What invoice types are available?",
+      "a6": "F1: Full invoice (standard). F2: Simplified (receipts). R1-R5: Rectificative (corrections to previous invoices under article 80 of the VAT Law).",
+      "q7": "Can I use the app in multiple languages?",
+      "a7": "Yes. EasyFactu is available in Spanish, English, Portuguese, French and German. Change the language from the selector in the top bar.",
+      "q8": "How does the Tax Summary work?",
+      "a8": "The Tax section automatically aggregates data from your issued and received invoices to show you a summary of income, expenses, VAT payable/recoverable and a fiscal result estimate."
+    },
+    "guides": {
+      "g1Title": "Getting started",
+      "g1Steps": [
+        "Configure your company data in Settings → Company",
+        "Add your clients in the Clients section",
+        "Add your suppliers in the Suppliers section",
+        "Issue your first invoice in Issued Invoices"
+      ],
+      "g2Title": "Invoice management",
+      "g2Steps": [
+        "Create invoices with a unique series number (e.g. A-2026-001)",
+        "Select the applicable VAT rate (0%, 4%, 10% or 21%)",
+        "Use 'Submit to AEAT' to officially validate each invoice",
+        "Download the validation CSV as proof"
+      ],
+      "g3Title": "Digital certificate",
+      "g3Steps": [
+        "Obtain your .p12 certificate from FNMT or AEAT",
+        "Go to Settings → Certificates",
+        "Upload the certificate with your password",
+        "Activate it to sign communications with AEAT"
+      ]
+    },
+    "contact": {
+      "docsLabel": "AEAT Documentation",
+      "docsUrl": "https://www.agenciatributaria.es/",
+      "docsDesc": "Official Tax Agency portal for information about VeriFactu",
+      "repoLabel": "GitHub Repository",
+      "repoDesc": "Source code and issue reporting"
+    },
+    "version": {
+      "appVersion": "Application version",
+      "buildDate": "Build date",
+      "techStack": "Tech stack"
+    }
+  },
+  "renta": {
+    "title": "Tax Return",
+    "subtitle": "Fiscal summary based on your issued and received invoices",
+    "year": "Fiscal year",
+    "loading": "Loading fiscal summary...",
+    "noData": "No data for this period",
+    "noDataHint": "Create issued and received invoices to see your fiscal summary",
+    "ingresos": "Income (Base)",
+    "gastos": "Expenses (Base)",
+    "resultado": "Net Result",
+    "ivaRepercutido": "Output VAT",
+    "ivaSoportado": "Input VAT",
+    "ivaLiquidar": "VAT to Settle",
+    "irpfEstimado": "Estimated Income Tax (15%)",
+    "facturasEmitidas": "Issued Invoices",
+    "facturasRecibidas": "Received Invoices",
+    "facturasVencidas": "Overdue Invoices",
+    "trimestralTitle": "Quarterly Income Breakdown",
+    "colTrimestre": "Quarter",
+    "colIngresos": "Base Income",
+    "colIva": "Output VAT",
+    "colTotal": "Total Invoiced",
+    "resumenTitle": "Annual Summary",
+    "positivo": "Positive result",
+    "negativo": "Negative result",
+    "ivaPositivo": "VAT to pay to Tax Authority",
+    "ivaNegativo": "VAT to recover from Tax Authority",
+    "disclaimer": "⚠️ This summary is for guidance only. Consult a tax advisor for your official declaration.",
+    "kpiTitle": "Key Indicators"
   }
 }
