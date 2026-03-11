@@ -83,7 +83,7 @@ export default function CertificateUpload() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.details || result.error || 'Error al subir certificado');
+        throw new Error(result.error || result.details || 'Error al subir certificado');
       }
 
       setMessage('Certificado subido correctamente');

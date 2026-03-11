@@ -18,7 +18,18 @@ import rateLimit from "express-rate-limit";
 const clientesRepository = new ClientesRepository(pool);
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (_req: Request, file: any, cb: multer.FileFilterCallback) => {
+    const name: string = (file.originalname as string).toLowerCase();
+    if (name.endsWith('.p12') || name.endsWith('.pfx') || (file.mimetype as string) === 'application/x-pkcs12') {
+      cb(null, true);
+    } else {
+      cb(new Error('Solo se permiten archivos .p12 o .pfx'));
+    }
+  },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max for certificate files
+});
 
 // Disk storage for factura attachments
 const facturasArchivosStorage = multer.diskStorage({
@@ -1614,7 +1625,14 @@ app.get("/api/v1/certificados/:id", async (req: Request, res: Response) => {
  */
 app.post(
   "/api/v1/certificados",
-  upload.single("file"),
+  (req: Request, res: Response, next: any) => {
+    upload.single("file")(req, res, (err: any) => {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      next();
+    });
+  },
   async (req: Request, res: Response) => {
     try {
       const file = req.file;
@@ -1640,9 +1658,8 @@ app.post(
       res.status(201).json(certificado);
     } catch (error: any) {
       console.error("Error creating certificado:", error);
-      res.status(500).json({
-        error: "Error al subir certificado",
-        details: error.message,
+      res.status(400).json({
+        error: error.message || "Error al subir certificado",
       });
     }
   }

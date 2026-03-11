@@ -41,8 +41,13 @@ export const certificadosRepository = {
     nombre?: string
   ): Promise<CertificadoDB> {
     try {
+      // Validate that the buffer has content before parsing
+      if (!p12Buffer || p12Buffer.length === 0) {
+        throw new Error('El archivo está vacío');
+      }
+
       // Parse .p12 file with node-forge
-      // Convert Buffer to binary string
+      // Convert Buffer to binary string (latin1 / binary encoding)
       const p12BinaryString = p12Buffer.toString('binary');
       const p12Asn1 = forge.asn1.fromDer(p12BinaryString);
       const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, password);
@@ -107,8 +112,12 @@ export const certificadosRepository = {
 
       return result.rows[0];
     } catch (error: any) {
-      if (error.message.includes('password')) {
-        throw new Error('Invalid certificate password');
+      const msg: string = (error && error.message) ? error.message : '';
+      // node-forge throws various low-level messages when the password is wrong
+      // or the file is not a valid PKCS12 binary.  Map them all to a clear
+      // user-facing message so the frontend can display it directly.
+      if (/password|mac could not|too few bytes|asn\.?1|pkcs-?12|decrypt/i.test(msg)) {
+        throw new Error('Contraseña incorrecta o archivo .p12 no válido');
       }
       throw error;
     }
