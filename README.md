@@ -87,17 +87,28 @@ easyfactu/
 
 ### Configuración de Base de Datos
 
-1. Crear una base de datos PostgreSQL:
+**Opción recomendada** – script de setup automático (crea la base de datos y aplica todas las migraciones):
+
+```bash
+createdb easyfactu          # crea la base de datos si no existe
+cd scaffold/backend
+npm run db:setup            # crea todas las tablas y carga datos por defecto
+```
+
+**Opción manual** – ejecutar cada migración en orden:
 
 ```bash
 createdb easyfactu
-```
-
-2. Ejecutar las migraciones:
-
-```bash
 psql easyfactu < migrations/20251122_create_invoice_declarations_queries.sql
 psql easyfactu < migrations/20260112_create_verifactu_tables.sql
+psql easyfactu < migrations/20260303_add_compatibility_fields.sql
+psql easyfactu < migrations/20260304_create_clientes_table.sql
+psql easyfactu < migrations/20260304_create_certificados_table.sql
+psql easyfactu < migrations/20260304_create_proveedores_table.sql
+psql easyfactu < migrations/20260306_create_facturas_recibidas.sql
+psql easyfactu < migrations/20260308_create_configuracion_table.sql
+psql easyfactu < migrations/20260309_create_usuarios_table.sql
+psql easyfactu < migrations/20260311_add_verifactu_entorno.sql
 ```
 
 ### Instalación del Backend
