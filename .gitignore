@@ -4,8 +4,6 @@ dist/
 **/dist/
 build/
 **/build/
-package-lock.json
-**/package-lock.json
 *.env
 .env
 .env.*
