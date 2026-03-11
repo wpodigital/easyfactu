@@ -27,6 +27,7 @@ type FacturacionConfig = {
   facturacion_tipo_iva_por_defecto: string;
   facturacion_texto_pie_factura: string;
   facturacion_mostrar_logo: string;
+  verifactu_entorno: string;
 };
 
 type PreferenciasConfig = {
@@ -105,6 +106,7 @@ const Configuracion = () => {
     facturacion_tipo_iva_por_defecto: '21',
     facturacion_texto_pie_factura: '',
     facturacion_mostrar_logo: 'true',
+    verifactu_entorno: 'pruebas',
   });
 
   const [preferencias, setPreferencias] = useState<PreferenciasConfig>({
@@ -483,6 +485,47 @@ const Configuracion = () => {
                   rows={4}
                   className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
+              </div>
+
+              {/* VeriFactu environment toggle */}
+              <div className="mt-6 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">
+                  Entorno VeriFactu
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                  Selecciona el entorno que se usará para comunicarse con la AEAT y para generar el QR de cotejo en las facturas.
+                </p>
+                <div className="flex gap-3">
+                  {(['pruebas', 'produccion'] as const).map((env) => {
+                    const isActive = facturacion.verifactu_entorno === env;
+                    const color = env === 'pruebas' ? '#e67e22' : '#27ae60';
+                    return (
+                      <button
+                        key={env}
+                        onClick={() => setFacturacion({ ...facturacion, verifactu_entorno: env })}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 font-semibold text-sm transition-all"
+                        style={{
+                          borderColor: isActive ? color : '#d1d5db',
+                          backgroundColor: isActive ? color : 'transparent',
+                          color: isActive ? 'white' : '#6b7280',
+                        }}
+                      >
+                        <span className={`inline-block w-2 h-2 rounded-full ${isActive ? 'bg-white' : 'bg-gray-400'}`} />
+                        {env === 'pruebas' ? '⚙ Pruebas' : '🚀 Producción'}
+                      </button>
+                    );
+                  })}
+                </div>
+                {facturacion.verifactu_entorno === 'produccion' && (
+                  <p className="mt-2 text-xs text-red-600 dark:text-red-400 font-medium">
+                    ⚠ Modo producción activo: las facturas se comunicarán al sistema real de la AEAT.
+                  </p>
+                )}
+                {facturacion.verifactu_entorno === 'pruebas' && (
+                  <p className="mt-2 text-xs text-orange-600 dark:text-orange-400">
+                    Modo pruebas activo: se usarán los servidores de pre-producción de la AEAT.
+                  </p>
+                )}
               </div>
 
               <div className="mt-6">

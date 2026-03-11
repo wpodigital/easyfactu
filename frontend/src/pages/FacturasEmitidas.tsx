@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Search, Plus, Eye, Trash2, X, CheckCircle, Clock, AlertCircle, XCircle, Send } from 'lucide-react';
+import { FileText, Search, Plus, Eye, Trash2, X, CheckCircle, Clock, AlertCircle, XCircle, Send, Download } from 'lucide-react';
 
 const API_URL = '/api/v1';
 const authHeaders = () => ({
@@ -129,6 +129,30 @@ export default function FacturasEmitidas() {
   const handleViewDetails = (factura: Factura) => {
     setSelectedFactura(factura);
     setShowDetailModal(true);
+  };
+
+  const handleDownloadPdf = async (id: number, numSerie: string) => {
+    try {
+      const response = await fetch(`${API_URL}/invoices/${id}/pdf`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('easyfactu_token') || ''}` },
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        alert(err.message || 'Error al generar el PDF');
+        return;
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `factura-${numSerie.replace(/[^a-zA-Z0-9-_]/g, '_')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('Error al descargar el PDF');
+    }
   };
 
   const handleOpenCreate = () => {
@@ -375,6 +399,13 @@ export default function FacturasEmitidas() {
                             title={t('facturasEmitidas.details')}
                           >
                             <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDownloadPdf(factura.id, factura.numSerie)}
+                            className="text-[#6d4c51] hover:opacity-70"
+                            title="Descargar PDF"
+                          >
+                            <Download className="h-4 w-4" />
                           </button>
                           {factura.validationStatus !== 'Correcto' && factura.status !== 'Anulada' && (
                             <button
@@ -625,6 +656,14 @@ export default function FacturasEmitidas() {
                     {t('facturasEmitidas.validate')}
                   </button>
                 )}
+                <button
+                  onClick={() => handleDownloadPdf(selectedFactura.id, selectedFactura.numSerie)}
+                  className="flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90"
+                  style={{ backgroundColor: '#6d4c51' }}
+                >
+                  <Download className="h-4 w-4" />
+                  Descargar PDF
+                </button>
                 <button
                   onClick={() => setShowDetailModal(false)}
                   className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"

@@ -7,6 +7,7 @@ import { facturasRecibidasRepository } from "./repositories/facturas_recibidas.r
 import { configuracionRepository } from "./repositories/configuracion.repository";
 import { certificadosRepository } from "./repositories/certificados.repository";
 import { usuariosRepository } from "./repositories/usuarios.repository";
+import { generateInvoicePdf } from "./services/pdf.service";
 import multer from "multer";
 import { pool } from "./config/database";
 import path from "path";
@@ -621,6 +622,83 @@ app.get("/api/v1/invoices", async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({
       error: 'Internal server error',
+      message: (error as Error).message,
+    });
+  }
+});
+
+/**
+ * GET /api/v1/invoices/:id/pdf
+ * Generate and download invoice PDF with AEAT QR code
+ */
+app.get("/api/v1/invoices/:id/pdf", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const factura = await facturasRepository.findById(id);
+
+    if (!factura) {
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+
+    // Load company config
+    const [
+      nif, nombre, nombre_comercial,
+      direccion, codigo_postal, ciudad, provincia, pais,
+      telefono, email, web, texto_pie, entorno,
+    ] = await Promise.all([
+      configuracionRepository.get('empresa_nif'),
+      configuracionRepository.get('empresa_nombre'),
+      configuracionRepository.get('empresa_nombre_comercial'),
+      configuracionRepository.get('empresa_direccion'),
+      configuracionRepository.get('empresa_codigo_postal'),
+      configuracionRepository.get('empresa_ciudad'),
+      configuracionRepository.get('empresa_provincia'),
+      configuracionRepository.get('empresa_pais'),
+      configuracionRepository.get('empresa_telefono'),
+      configuracionRepository.get('empresa_email'),
+      configuracionRepository.get('empresa_web'),
+      configuracionRepository.get('facturacion_texto_pie_factura'),
+      configuracionRepository.get('verifactu_entorno'),
+    ]);
+
+    const empresa = {
+      nif: nif || factura.id_emisor_factura,
+      nombre: nombre || factura.nombre_razon_emisor,
+      nombre_comercial: nombre_comercial || undefined,
+      direccion: direccion || undefined,
+      codigo_postal: codigo_postal || undefined,
+      ciudad: ciudad || undefined,
+      provincia: provincia || undefined,
+      pais: pais || undefined,
+      telefono: telefono || undefined,
+      email: email || undefined,
+      web: web || undefined,
+      texto_pie: texto_pie || undefined,
+    };
+
+    const facturaData = {
+      id: factura.id!,
+      num_serie_factura: factura.num_serie_factura,
+      fecha_expedicion_factura: factura.fecha_expedicion_factura,
+      id_emisor_factura: factura.id_emisor_factura,
+      nombre_razon_emisor: factura.nombre_razon_emisor,
+      tipo_factura: factura.tipo_factura,
+      importe_total: factura.importe_total,
+      cuota_total: factura.cuota_total,
+      huella: factura.huella,
+      validation_csv: factura.validation_csv,
+    };
+
+    const pdfBuffer = await generateInvoicePdf(empresa, facturaData, entorno || 'pruebas');
+
+    const filename = `factura-${factura.num_serie_factura.replace(/[^a-zA-Z0-9-_]/g, '_')}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('Error generating invoice PDF:', error);
+    res.status(500).json({
+      error: 'Error generating PDF',
       message: (error as Error).message,
     });
   }
