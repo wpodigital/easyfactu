@@ -34,10 +34,23 @@ export interface FacturaData {
   id_emisor_factura: string;
   nombre_razon_emisor: string;
   tipo_factura: string;
-  importe_total?: number;
-  cuota_total?: number;
+  // PostgreSQL numeric columns are returned as strings by node-postgres,
+  // so we accept both string and number here.
+  importe_total?: number | string | null;
+  cuota_total?: number | string | null;
   huella?: string;
   validation_csv?: string;
+}
+
+/**
+ * Safely coerces a value to a JS number.
+ * PostgreSQL `numeric`/`decimal` columns are returned as strings by node-postgres.
+ * Returns 0 for null, undefined, or non-numeric values.
+ */
+function num(v: number | string | null | undefined): number {
+  if (v === null || v === undefined) return 0;
+  const n = Number(v);
+  return isNaN(n) ? 0 : n;
 }
 
 /**
@@ -58,7 +71,7 @@ function buildQrUrl(factura: FacturaData, entorno: string): string {
     fechaFmt = `${d}-${m}-${y}`;
   }
 
-  const importe = (factura.importe_total ?? 0).toFixed(2);
+  const importe = num(factura.importe_total).toFixed(2);
 
   return (
     `${host}/wlpl/TIKE-CONT/ValidarQR` +
@@ -186,20 +199,20 @@ export async function generateInvoicePdf(
       doc.text(h, cols[i] + 4, tableY + 5, { width: 120 });
     });
 
-    const baseImponible = (factura.importe_total ?? 0) - (factura.cuota_total ?? 0);
+    const baseImponible = num(factura.importe_total) - num(factura.cuota_total);
     const rowY = tableY + 18;
     doc.rect(40, rowY, W, 20).fill('#f8f9fa');
     doc.font('Helvetica').fontSize(9).fillColor(darkGray);
     doc.text('Servicios / Productos', cols[0] + 4, rowY + 6, { width: 150 });
     doc.text(eur(baseImponible), cols[1] + 4, rowY + 6, { width: 120 });
-    doc.text(eur(factura.cuota_total), cols[2] + 4, rowY + 6, { width: 80 });
-    doc.text(eur(factura.importe_total), cols[3] + 4, rowY + 6, { width: 80 });
+    doc.text(eur(num(factura.cuota_total)), cols[2] + 4, rowY + 6, { width: 80 });
+    doc.text(eur(num(factura.importe_total)), cols[3] + 4, rowY + 6, { width: 80 });
 
     const totalY = rowY + 20;
     doc.rect(40, totalY, W, 22).fill(blue);
     doc.font('Helvetica-Bold').fontSize(11).fillColor('white')
       .text('TOTAL FACTURA', cols[0] + 4, totalY + 6, { width: 350 });
-    doc.text(eur(factura.importe_total), cols[3] + 4, totalY + 6, { width: 80 });
+    doc.text(eur(num(factura.importe_total)), cols[3] + 4, totalY + 6, { width: 80 });
 
     // ── QR code block ──────────────────────────────────────────────
     const qrY = totalY + 36;
