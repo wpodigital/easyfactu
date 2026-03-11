@@ -36,7 +36,11 @@ export default function CertificateUpload() {
     try {
       const response = await fetch(API_URL, { headers: authHeaders() });
       const data = await response.json();
-      setCertificados(data);
+      if (!response.ok) {
+        setMessage(data.error || 'Error al cargar certificados');
+        return;
+      }
+      setCertificados(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error(error);
       setMessage('Error al cargar certificados');
