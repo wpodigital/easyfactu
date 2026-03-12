@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import { testConnection, initializeDatabase, closePool } from "./config/database";
 import { facturasRepository, CreateFacturaParams } from "./repositories/facturas.repository";
 import { ClientesRepository, CreateClienteParams, UpdateClienteParams } from "./repositories/clientes.repository";
@@ -6,21 +6,348 @@ import { proveedoresRepository, CreateProveedorParams } from "./repositories/pro
 import { facturasRecibidasRepository } from "./repositories/facturas_recibidas.repository";
 import { configuracionRepository } from "./repositories/configuracion.repository";
 import { certificadosRepository } from "./repositories/certificados.repository";
+import { usuariosRepository } from "./repositories/usuarios.repository";
+import { generateInvoicePdf, ReceptorData } from "./services/pdf.service";
 import multer from "multer";
 import { pool } from "./config/database";
+import path from "path";
+import fs from "fs";
+import jwt from "jsonwebtoken";
+import rateLimit from "express-rate-limit";
 
 const clientesRepository = new ClientesRepository(pool);
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (_req: Request, file: any, cb: multer.FileFilterCallback) => {
+    const name: string = (file.originalname as string).toLowerCase();
+    if (name.endsWith('.p12') || name.endsWith('.pfx') || (file.mimetype as string) === 'application/x-pkcs12') {
+      cb(null, true);
+    } else {
+      cb(new Error('Solo se permiten archivos .p12 o .pfx'));
+    }
+  },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max for certificate files
+});
+
+// Disk storage for factura attachments
+const facturasArchivosStorage = multer.diskStorage({
+  destination: (req: Request, _file: any, cb: (error: Error | null, destination: string) => void) => {
+    const facturaId = (req.params as Record<string, string>).id || "unknown";
+    const dir = path.join(__dirname, "..", "uploads", "facturas-recibidas", facturaId);
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (_req: Request, file: any, cb: (error: Error | null, filename: string) => void) => {
+    const timestamp = Date.now();
+    const safeName = (file.originalname as string).replace(/[^a-zA-Z0-9._-]/g, "_");
+    cb(null, `${timestamp}_${safeName}`);
+  },
+});
+const uploadArchivos = multer({
+  storage: facturasArchivosStorage,
+  fileFilter: (_req: Request, file: any, cb: multer.FileFilterCallback) => {
+    if ((file.mimetype as string) === "application/pdf" || (file.originalname as string).toLowerCase().endsWith(".pdf")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Solo se permiten archivos PDF"));
+    }
+  },
+  limits: { fileSize: 20 * 1024 * 1024, files: 10 }, // 20 MB per file, max 10 files
+});
+
+// ─────────────────────────────────────────────
+// CORS – allow the Vite dev-server (and any configured origin) to reach the API
+// ─────────────────────────────────────────────
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGIN || "http://localhost:5173,http://localhost:5174,http://localhost:4173")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const origin = req.headers.origin as string | undefined;
+  const originAllowed = Boolean(origin && ALLOWED_ORIGINS.includes(origin));
+
+  if (originAllowed) {
+    res.setHeader("Access-Control-Allow-Origin", origin as string);
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+  }
+
+  // Only acknowledge preflight for allowed origins to avoid leaking headers to others
+  if (req.method === "OPTIONS") {
+    res.sendStatus(originAllowed ? 204 : 403);
+    return;
+  }
+  next();
+});
+
 app.use(express.json());
 app.use(express.text({ type: "application/xml" }));
+
+// ─────────────────────────────────────────────
+// JWT helpers
+// ─────────────────────────────────────────────
+const JWT_SECRET = process.env.JWT_SECRET || "easyfactu_dev_secret_change_in_production";
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "8h";
+
+interface JwtPayload {
+  userId: number;
+  email: string;
+  rol: string;
+}
+
+// Extend Express Request to carry the authenticated user
+declare global {
+  namespace Express {
+    interface Request {
+      user?: JwtPayload;
+    }
+  }
+}
+
+/**
+ * JWT authentication middleware – protects all /api/v1/ routes
+ * except /api/v1/auth/* which are public.
+ */
+function requireAuth(req: Request, res: Response, next: NextFunction): void {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    res.status(401).json({ error: "No autenticado. Inicia sesión." });
+    return;
+  }
+  const token = authHeader.slice(7);
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    req.user = decoded;
+    next();
+  } catch {
+    res.status(401).json({ error: "Token inválido o expirado. Inicia sesión de nuevo." });
+  }
+}
+
+// ─────────────────────────────────────────────
+// Auth endpoints (public – no JWT required)
+// ─────────────────────────────────────────────
+
+/** Rate limiter for auth endpoints: max 10 attempts per 15 minutes per IP */
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Demasiados intentos. Espera 15 minutos antes de volver a intentarlo." },
+});
+
+/** Rate limiter for general API endpoints: max 100 requests per minute per IP */
+const apiRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Demasiadas solicitudes. Por favor, espera un momento." },
+});
+
+/**
+ * POST /api/v1/auth/login
+ * Authenticates a user and returns a JWT token.
+ */
+app.post("/api/v1/auth/login", authRateLimiter, async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body as { email?: string; password?: string };
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email y contraseña son obligatorios." });
+    }
+    const user = await usuariosRepository.findByEmail(email);
+    if (!user || !user.activo) {
+      return res.status(401).json({ error: "Credenciales incorrectas." });
+    }
+    const valid = await usuariosRepository.verifyPassword(password, user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: "Credenciales incorrectas." });
+    }
+    await usuariosRepository.updateLastAccess(user.id);
+    const payload: JwtPayload = { userId: user.id, email: user.email, rol: user.rol };
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions);
+    res.json({
+      token,
+      user: { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol },
+    });
+  } catch (error: any) {
+    console.error("Error in login:", error);
+    res.status(500).json({ error: "Error interno del servidor.", details: error.message });
+  }
+});
+
+/**
+ * POST /api/v1/auth/register
+ * Creates the first admin user. Disabled once a user already exists.
+ */
+app.post("/api/v1/auth/register", authRateLimiter, async (req: Request, res: Response) => {
+  try {
+    const total = await usuariosRepository.countAll();
+    if (total > 0) {
+      return res.status(403).json({ error: "El registro inicial ya se realizó. Contacta con el administrador." });
+    }
+    const { nombre, email, password } = req.body as { nombre?: string; email?: string; password?: string };
+    if (!nombre || !email || !password) {
+      return res.status(400).json({ error: "nombre, email y contraseña son obligatorios." });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ error: "La contraseña debe tener al menos 8 caracteres." });
+    }
+    const user = await usuariosRepository.create({ nombre, email, password, rol: "admin" });
+    const payload: JwtPayload = { userId: user.id, email: user.email, rol: user.rol };
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions);
+    res.status(201).json({
+      token,
+      user: { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol },
+    });
+  } catch (error: any) {
+    console.error("Error in register:", error);
+    if (error.code === "23505") {
+      return res.status(409).json({ error: "Este email ya está registrado." });
+    }
+    res.status(500).json({ error: "Error interno del servidor.", details: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/auth/needs-setup
+ * Returns whether the initial admin registration is still pending.
+ * Public endpoint — no authentication required.
+ */
+app.get("/api/v1/auth/needs-setup", async (_req: Request, res: Response) => {
+  try {
+    const total = await usuariosRepository.countAll();
+    res.json({ needsSetup: total === 0 });
+  } catch (error: any) {
+    res.status(500).json({ error: "Error interno del servidor.", details: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/auth/me
+ * Returns the current authenticated user's info.
+ */
+app.get("/api/v1/auth/me", authRateLimiter, requireAuth, async (req: Request, res: Response) => {
+  try {
+    const user = await usuariosRepository.findById(req.user!.userId);
+    if (!user) return res.status(404).json({ error: "Usuario no encontrado." });
+    res.json({ user });
+  } catch (error: any) {
+    res.status(500).json({ error: "Error interno del servidor.", details: error.message });
+  }
+});
+
+// ─────────────────────────────────────────────
+// Protect all remaining /api/v1/ routes with JWT
+// ─────────────────────────────────────────────
+app.use("/api/v1/", requireAuth);
+
+// ─────────────────────────────────────────────
+// User management endpoints (admin only)
+// ─────────────────────────────────────────────
+
+/**
+ * GET /api/v1/usuarios
+ * List all users (admin only).
+ */
+app.get("/api/v1/usuarios", async (req: Request, res: Response) => {
+  try {
+    if (req.user!.rol !== "admin") return res.status(403).json({ error: "Acceso denegado." });
+    const users = await usuariosRepository.findAll();
+    res.json({ users });
+  } catch (error: any) {
+    res.status(500).json({ error: "Error interno del servidor.", details: error.message });
+  }
+});
+
+/**
+ * POST /api/v1/usuarios
+ * Create a new user (admin only).
+ */
+app.post("/api/v1/usuarios", async (req: Request, res: Response) => {
+  try {
+    if (req.user!.rol !== "admin") return res.status(403).json({ error: "Acceso denegado." });
+    const { nombre, email, password, rol } = req.body as { nombre?: string; email?: string; password?: string; rol?: string };
+    if (!nombre || !email || !password) {
+      return res.status(400).json({ error: "nombre, email y contraseña son obligatorios." });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ error: "La contraseña debe tener al menos 8 caracteres." });
+    }
+    const user = await usuariosRepository.create({ nombre, email, password, rol: rol || "admin" });
+    res.status(201).json({ user });
+  } catch (error: any) {
+    if (error.code === "23505") {
+      return res.status(409).json({ error: "Este email ya está registrado." });
+    }
+    res.status(500).json({ error: "Error interno del servidor.", details: error.message });
+  }
+});
+
+/**
+ * PUT /api/v1/usuarios/:id
+ * Update a user (admin only, or own account for password change).
+ */
+app.put("/api/v1/usuarios/:id", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const isAdmin = req.user!.rol === "admin";
+    const isOwnAccount = req.user!.userId === id;
+    if (!isAdmin && !isOwnAccount) return res.status(403).json({ error: "Acceso denegado." });
+
+    const { nombre, email, password, rol, activo } = req.body as {
+      nombre?: string; email?: string; password?: string; rol?: string; activo?: boolean;
+    };
+
+    // Non-admins can only change their own password
+    const params = isAdmin
+      ? { nombre, email, password, rol, activo }
+      : { password };
+
+    if (password && password.length < 8) {
+      return res.status(400).json({ error: "La contraseña debe tener al menos 8 caracteres." });
+    }
+
+    const user = await usuariosRepository.update(id, params);
+    if (!user) return res.status(404).json({ error: "Usuario no encontrado." });
+    res.json({ user });
+  } catch (error: any) {
+    if (error.code === "23505") {
+      return res.status(409).json({ error: "Este email ya está registrado." });
+    }
+    res.status(500).json({ error: "Error interno del servidor.", details: error.message });
+  }
+});
+
+/**
+ * DELETE /api/v1/usuarios/:id
+ * Delete a user (admin only, cannot delete own account).
+ */
+app.delete("/api/v1/usuarios/:id", async (req: Request, res: Response) => {
+  try {
+    if (req.user!.rol !== "admin") return res.status(403).json({ error: "Acceso denegado." });
+    const id = parseInt(req.params.id, 10);
+    if (req.user!.userId === id) {
+      return res.status(400).json({ error: "No puedes eliminar tu propio usuario." });
+    }
+    const deleted = await usuariosRepository.delete(id);
+    if (!deleted) return res.status(404).json({ error: "Usuario no encontrado." });
+    res.json({ ok: true });
+  } catch (error: any) {
+    res.status(500).json({ error: "Error interno del servidor.", details: error.message });
+  }
+});
 
 /**
  * POST /api/v1/invoices
  * Create a new invoice (Alta - Registration)
  */
-app.post("/api/v1/invoices", async (req: Request, res: Response) => {
+app.post("/api/v1/invoices", apiRateLimiter, async (req: Request, res: Response) => {
   try {
     const data = req.body;
     
@@ -37,6 +364,10 @@ app.post("/api/v1/invoices", async (req: Request, res: Response) => {
       estado_registro: 'Correcta',  // Initial state
     };
     
+    // Extract receptor/destinatario data if provided
+    const nifReceptor: string | null = data.NifReceptor || data.nifReceptor || null;
+    const nombreReceptor: string | null = data.NombreReceptor || data.nombreReceptor || null;
+
     // Get previous invoice for chaining
     const previousInvoice = await facturasRepository.getLastForChaining(
       facturaData.id_emisor_factura
@@ -59,6 +390,14 @@ app.post("/api/v1/invoices", async (req: Request, res: Response) => {
     
     // Insert into database
     const factura = await facturasRepository.create(facturaData);
+
+    // Insert receptor/destinatario if provided
+    if (nombreReceptor && factura.id) {
+      await pool.query(
+        `INSERT INTO destinatarios (factura_id, nombre_razon, nif) VALUES ($1, $2, $3)`,
+        [factura.id, nombreReceptor, nifReceptor || null]
+      );
+    }
     
     res.status(201).json({
       id: factura.id,
@@ -214,13 +553,6 @@ app.delete("/api/v1/invoices/:id", async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Invoice not found' });
     }
     
-    if (factura.validation_status !== 'Correcto') {
-      return res.status(400).json({
-        error: 'Cannot cancel',
-        message: 'Only validated invoices can be cancelled',
-      });
-    }
-    
     const deleted = await facturasRepository.delete(id);
     
     if (deleted) {
@@ -233,6 +565,43 @@ app.delete("/api/v1/invoices/:id", async (req: Request, res: Response) => {
     } else {
       res.status(500).json({ error: 'Failed to cancel invoice' });
     }
+  } catch (error) {
+    res.status(500).json({
+      error: 'Internal server error',
+      message: (error as Error).message,
+    });
+  }
+});
+
+/**
+ * GET /api/v1/invoices/stats
+ * Get invoice statistics
+ */
+app.get("/api/v1/invoices/stats", async (req: Request, res: Response) => {
+  try {
+    const rows = await facturasRepository.rawQuery<{
+      total: string;
+      anuladas: string;
+      validadas: string;
+      pendientes: string;
+      importe_total: string;
+    }>(`
+      SELECT
+        COUNT(*) AS total,
+        COUNT(*) FILTER (WHERE estado_registro = 'Anulada') AS anuladas,
+        COUNT(*) FILTER (WHERE validation_status = 'Correcto' AND estado_registro != 'Anulada') AS validadas,
+        COUNT(*) FILTER (WHERE (validation_status IS NULL OR validation_status != 'Correcto') AND estado_registro != 'Anulada') AS pendientes,
+        COALESCE(SUM(importe_total) FILTER (WHERE estado_registro != 'Anulada'), 0) AS importe_total
+      FROM facturas
+    `);
+    const row = rows[0];
+    res.json({
+      total: parseInt(row.total, 10),
+      validadas: parseInt(row.validadas, 10),
+      pendientes: parseInt(row.pendientes, 10),
+      anuladas: parseInt(row.anuladas, 10),
+      importeTotal: parseFloat(row.importe_total),
+    });
   } catch (error) {
     res.status(500).json({
       error: 'Internal server error',
@@ -270,17 +639,111 @@ app.get("/api/v1/invoices", async (req: Request, res: Response) => {
       invoices: facturas.map(f => ({
         id: f.id,
         idEmisor: f.id_emisor_factura,
+        nombreEmisor: f.nombre_razon_emisor,
         numSerie: f.num_serie_factura,
         fecha: f.fecha_expedicion_factura,
         tipoFactura: f.tipo_factura,
+        importeTotal: f.importe_total,
+        cuotaTotal: f.cuota_total,
         status: f.estado_registro,
         validationStatus: f.validation_status,
+        validationCSV: f.validation_csv,
         timestamp: f.created_at,
       })),
     });
   } catch (error) {
     res.status(500).json({
       error: 'Internal server error',
+      message: (error as Error).message,
+    });
+  }
+});
+
+/**
+ * GET /api/v1/invoices/:id/pdf
+ * Generate and download invoice PDF with AEAT QR code
+ */
+app.get("/api/v1/invoices/:id/pdf", apiRateLimiter, async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const factura = await facturasRepository.findById(id);
+
+    if (!factura) {
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+
+    // Load company config
+    const [
+      nif, nombre, nombre_comercial,
+      direccion, codigo_postal, ciudad, provincia, pais,
+      telefono, email, web, texto_pie, entorno,
+    ] = await Promise.all([
+      configuracionRepository.get('empresa_nif'),
+      configuracionRepository.get('empresa_nombre'),
+      configuracionRepository.get('empresa_nombre_comercial'),
+      configuracionRepository.get('empresa_direccion'),
+      configuracionRepository.get('empresa_codigo_postal'),
+      configuracionRepository.get('empresa_ciudad'),
+      configuracionRepository.get('empresa_provincia'),
+      configuracionRepository.get('empresa_pais'),
+      configuracionRepository.get('empresa_telefono'),
+      configuracionRepository.get('empresa_email'),
+      configuracionRepository.get('empresa_web'),
+      configuracionRepository.get('facturacion_texto_pie_factura'),
+      configuracionRepository.get('verifactu_entorno'),
+    ]);
+
+    const empresa = {
+      nif: nif || factura.id_emisor_factura,
+      nombre: nombre || factura.nombre_razon_emisor,
+      nombre_comercial: nombre_comercial || undefined,
+      direccion: direccion || undefined,
+      codigo_postal: codigo_postal || undefined,
+      ciudad: ciudad || undefined,
+      provincia: provincia || undefined,
+      pais: pais || undefined,
+      telefono: telefono || undefined,
+      email: email || undefined,
+      web: web || undefined,
+      texto_pie: texto_pie || undefined,
+    };
+
+    // Load receptor/destinatario data if it exists
+    const destinatarioResult = await pool.query(
+      'SELECT nombre_razon, nif FROM destinatarios WHERE factura_id = $1 LIMIT 1',
+      [id]
+    );
+    const receptor: ReceptorData | undefined = destinatarioResult.rows.length > 0
+      ? {
+          nombre_razon: destinatarioResult.rows[0].nombre_razon,
+          nif: destinatarioResult.rows[0].nif || undefined,
+        }
+      : undefined;
+
+    const facturaData = {
+      id: factura.id!,
+      num_serie_factura: factura.num_serie_factura,
+      fecha_expedicion_factura: factura.fecha_expedicion_factura,
+      id_emisor_factura: factura.id_emisor_factura,
+      nombre_razon_emisor: factura.nombre_razon_emisor,
+      tipo_factura: factura.tipo_factura,
+      importe_total: factura.importe_total,
+      cuota_total: factura.cuota_total,
+      huella: factura.huella,
+      validation_csv: factura.validation_csv,
+      receptor,
+    };
+
+    const pdfBuffer = await generateInvoicePdf(empresa, facturaData, entorno || 'pruebas');
+
+    const filename = `factura-${factura.num_serie_factura.replace(/[^a-zA-Z0-9-_]/g, '_')}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('Error generating invoice PDF:', error);
+    res.status(500).json({
+      error: 'Error generating PDF',
       message: (error as Error).message,
     });
   }
@@ -354,6 +817,111 @@ app.post("/api/v1/invoices/import", async (req: Request, res: Response) => {
   } catch (error) {
     res.status(400).json({
       error: 'Invalid XML',
+      message: (error as Error).message,
+    });
+  }
+});
+
+// ===================================================================
+// Renta / Resumen Fiscal Endpoints
+// ===================================================================
+
+/**
+ * GET /api/v1/renta/resumen
+ * Aggregated fiscal summary from emitted and received invoices
+ */
+app.get("/api/v1/renta/resumen", async (req: Request, res: Response) => {
+  try {
+    const year = req.query.year ? parseInt(req.query.year as string, 10) : new Date().getFullYear();
+
+    type EmitidasRow = {
+      total_facturas: string;
+      ingresos_brutos: string;
+      iva_repercutido: string;
+      base_imponible_emitidas: string;
+      t1_base: string; t2_base: string; t3_base: string; t4_base: string;
+      t1_iva: string; t2_iva: string; t3_iva: string; t4_iva: string;
+    };
+    type RecibidasRow = {
+      total_facturas: string;
+      gastos_brutos: string;
+      iva_soportado: string;
+      base_imponible_recibidas: string;
+      facturas_vencidas: string;
+    };
+
+    // Emitted invoices aggregation (income)
+    const emitidasRows = await facturasRepository.rawQuery<EmitidasRow>(`
+      SELECT
+        COUNT(*) FILTER (WHERE estado_registro != 'Anulada') AS total_facturas,
+        COALESCE(SUM(importe_total) FILTER (WHERE estado_registro != 'Anulada'), 0) AS ingresos_brutos,
+        COALESCE(SUM(cuota_total) FILTER (WHERE estado_registro != 'Anulada'), 0) AS iva_repercutido,
+        COALESCE(SUM(importe_total - COALESCE(cuota_total, 0)) FILTER (WHERE estado_registro != 'Anulada'), 0) AS base_imponible_emitidas,
+        COALESCE(SUM(importe_total - COALESCE(cuota_total, 0)) FILTER (WHERE estado_registro != 'Anulada' AND EXTRACT(QUARTER FROM fecha_expedicion_factura) = 1 AND EXTRACT(YEAR FROM fecha_expedicion_factura) = $1), 0) AS t1_base,
+        COALESCE(SUM(importe_total - COALESCE(cuota_total, 0)) FILTER (WHERE estado_registro != 'Anulada' AND EXTRACT(QUARTER FROM fecha_expedicion_factura) = 2 AND EXTRACT(YEAR FROM fecha_expedicion_factura) = $1), 0) AS t2_base,
+        COALESCE(SUM(importe_total - COALESCE(cuota_total, 0)) FILTER (WHERE estado_registro != 'Anulada' AND EXTRACT(QUARTER FROM fecha_expedicion_factura) = 3 AND EXTRACT(YEAR FROM fecha_expedicion_factura) = $1), 0) AS t3_base,
+        COALESCE(SUM(importe_total - COALESCE(cuota_total, 0)) FILTER (WHERE estado_registro != 'Anulada' AND EXTRACT(QUARTER FROM fecha_expedicion_factura) = 4 AND EXTRACT(YEAR FROM fecha_expedicion_factura) = $1), 0) AS t4_base,
+        COALESCE(SUM(cuota_total) FILTER (WHERE estado_registro != 'Anulada' AND EXTRACT(QUARTER FROM fecha_expedicion_factura) = 1 AND EXTRACT(YEAR FROM fecha_expedicion_factura) = $1), 0) AS t1_iva,
+        COALESCE(SUM(cuota_total) FILTER (WHERE estado_registro != 'Anulada' AND EXTRACT(QUARTER FROM fecha_expedicion_factura) = 2 AND EXTRACT(YEAR FROM fecha_expedicion_factura) = $1), 0) AS t2_iva,
+        COALESCE(SUM(cuota_total) FILTER (WHERE estado_registro != 'Anulada' AND EXTRACT(QUARTER FROM fecha_expedicion_factura) = 3 AND EXTRACT(YEAR FROM fecha_expedicion_factura) = $1), 0) AS t3_iva,
+        COALESCE(SUM(cuota_total) FILTER (WHERE estado_registro != 'Anulada' AND EXTRACT(QUARTER FROM fecha_expedicion_factura) = 4 AND EXTRACT(YEAR FROM fecha_expedicion_factura) = $1), 0) AS t4_iva
+      FROM facturas
+      WHERE EXTRACT(YEAR FROM fecha_expedicion_factura) = $1
+    `, [year]);
+
+    // Received invoices aggregation (expenses)
+    const recibidasRows = await facturasRepository.rawQuery<RecibidasRow>(`
+      SELECT
+        COUNT(*) AS total_facturas,
+        COALESCE(SUM(importe_total), 0) AS gastos_brutos,
+        COALESCE(SUM(iva_total), 0) AS iva_soportado,
+        COALESCE(SUM(base_imponible), 0) AS base_imponible_recibidas,
+        COUNT(*) FILTER (WHERE estado = 'pendiente' AND fecha_vencimiento < NOW()) AS facturas_vencidas
+      FROM facturas_recibidas
+      WHERE EXTRACT(YEAR FROM fecha_factura) = $1
+    `, [year]);
+
+    const e = emitidasRows[0];
+    const r = recibidasRows[0];
+
+    const ingresosBrutos = parseFloat(e.ingresos_brutos);
+    const gastosBrutos = parseFloat(r.gastos_brutos);
+    const ivaRepercutido = parseFloat(e.iva_repercutido);
+    const ivaSoportado = parseFloat(r.iva_soportado);
+    const baseEmitidas = parseFloat(e.base_imponible_emitidas);
+    const baseRecibidas = parseFloat(r.base_imponible_recibidas);
+
+    const resultado = baseEmitidas - baseRecibidas;
+    const ivaLiquidar = ivaRepercutido - ivaSoportado;
+    // Estimated IRPF at 15% for freelancers (simplified)
+    const irpfEstimado = Math.max(0, resultado * 0.15);
+
+    res.json({
+      year,
+      resumen: {
+        ingresosBrutos,
+        gastosBrutos,
+        resultado,
+        ivaRepercutido,
+        ivaSoportado,
+        ivaLiquidar,
+        irpfEstimado,
+      },
+      facturas: {
+        emitidas: parseInt(e.total_facturas, 10),
+        recibidas: parseInt(r.total_facturas, 10),
+        vencidas: parseInt(r.facturas_vencidas, 10),
+      },
+      trimestres: [
+        { trimestre: 1, label: `T1 ${year}`, ingresos: parseFloat(e.t1_base), iva: parseFloat(e.t1_iva) },
+        { trimestre: 2, label: `T2 ${year}`, ingresos: parseFloat(e.t2_base), iva: parseFloat(e.t2_iva) },
+        { trimestre: 3, label: `T3 ${year}`, ingresos: parseFloat(e.t3_base), iva: parseFloat(e.t3_iva) },
+        { trimestre: 4, label: `T4 ${year}`, ingresos: parseFloat(e.t4_base), iva: parseFloat(e.t4_iva) },
+      ],
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Internal server error',
       message: (error as Error).message,
     });
   }
@@ -811,19 +1379,35 @@ app.post("/api/v1/facturas-recibidas", async (req: Request, res: Response) => {
 });
 
 // Marcar como pagada
-app.post("/api/v1/facturas-recibidas/:id/pagar", async (req: Request, res: Response) => {
+// Obtener factura por ID
+app.get("/api/v1/facturas-recibidas/:id", async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
-
-    const factura = await facturasRecibidasRepository.markAsPaid(
-      id,
-      new Date()
-    );
-
+    const factura = await facturasRecibidasRepository.findById(id);
+    if (!factura) {
+      return res.status(404).json({ error: "Factura no encontrada" });
+    }
     res.json(factura);
   } catch (error: any) {
     res.status(500).json({
-      error: "Error al marcar factura como pagada",
+      error: "Error al obtener factura recibida",
+      details: error.message
+    });
+  }
+});
+
+// Actualizar factura recibida
+app.put("/api/v1/facturas-recibidas/:id", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    const factura = await facturasRecibidasRepository.update(id, req.body);
+    if (!factura) {
+      return res.status(404).json({ error: "Factura no encontrada" });
+    }
+    res.json(factura);
+  } catch (error: any) {
+    res.status(500).json({
+      error: "Error al actualizar factura recibida",
       details: error.message
     });
   }
@@ -860,6 +1444,101 @@ app.delete("/api/v1/facturas-recibidas/:id", async (req: Request, res: Response)
       error: "Error al eliminar factura",
       details: error.message
     });
+  }
+});
+
+// Subir archivos adjuntos a una factura recibida
+app.post(
+  "/api/v1/facturas-recibidas/:id/archivos",
+  (req: Request, res: Response, next: express.NextFunction) => {
+    uploadArchivos.array("archivos", 10)(req, res, (err: unknown) => {
+      if (err) {
+        const msg = err instanceof Error ? err.message : "Error al subir archivo";
+        return res.status(400).json({ error: msg });
+      }
+      next();
+    });
+  },
+  async (req: Request, res: Response) => {
+    try {
+      const files = (req as any).files as Array<{originalname: string; filename: string; size: number}> ?? [];
+      if (files.length === 0) {
+        return res.status(400).json({ error: "No se enviaron archivos" });
+      }
+      const result = files.map((f) => ({
+        nombre: f.originalname,
+        filename: f.filename,
+        size: f.size,
+        url: `/api/v1/facturas-recibidas/${req.params.id}/archivos/${f.filename}`,
+      }));
+      res.status(201).json(result);
+    } catch (error: any) {
+      res.status(500).json({ error: "Error al subir archivos", details: error.message });
+    }
+  }
+);
+
+// Listar archivos adjuntos de una factura recibida
+app.get("/api/v1/facturas-recibidas/:id/archivos", (req: Request, res: Response) => {
+  try {
+    const dir = path.join(__dirname, "..", "uploads", "facturas-recibidas", req.params.id);
+    if (!fs.existsSync(dir)) {
+      return res.json([]);
+    }
+    const files = fs.readdirSync(dir).map((filename) => {
+      const stat = fs.statSync(path.join(dir, filename));
+      // Strip the timestamp prefix to recover the original name (replace only the leading timestamp and first underscore)
+      const nombre = filename.replace(/^\d+_/, "");
+      return {
+        nombre,
+        filename,
+        size: stat.size,
+        url: `/api/v1/facturas-recibidas/${req.params.id}/archivos/${filename}`,
+      };
+    });
+    res.json(files);
+  } catch (error: any) {
+    res.status(500).json({ error: "Error al listar archivos", details: error.message });
+  }
+});
+
+// Descargar / servir un archivo adjunto
+app.get("/api/v1/facturas-recibidas/:id/archivos/:filename", (req: Request, res: Response) => {
+  const rawFilename = req.params.filename;
+  // Prevent path traversal: only allow safe filenames (no slashes or dots leading to parent dirs)
+  if (!rawFilename || /[/\\]/.test(rawFilename) || rawFilename.startsWith("..")) {
+    return res.status(400).json({ error: "Nombre de archivo inválido" });
+  }
+  const filePath = path.join(
+    __dirname, "..", "uploads", "facturas-recibidas",
+    req.params.id, rawFilename
+  );
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: "Archivo no encontrado" });
+  }
+  res.setHeader("Content-Disposition", `inline; filename="${rawFilename}"`);
+  res.sendFile(path.resolve(filePath));
+});
+
+// Eliminar un archivo adjunto
+app.delete("/api/v1/facturas-recibidas/:id/archivos/:filename", (req: Request, res: Response) => {
+  const rawFilename = req.params.filename;
+  // Prevent path traversal
+  if (!rawFilename || /[/\\]/.test(rawFilename) || rawFilename.startsWith("..")) {
+    return res.status(400).json({ error: "Nombre de archivo inválido" });
+  }
+  const filePath = path.join(
+    __dirname, "..", "uploads", "facturas-recibidas",
+    req.params.id, rawFilename
+  );
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: "Archivo no encontrado" });
+  }
+  try {
+    fs.unlinkSync(filePath);
+    res.json({ message: "Archivo eliminado" });
+  } catch (error: any) {
+    res.status(500).json({ error: "Error al eliminar archivo", details: error.message });
   }
 });
 
@@ -980,7 +1659,14 @@ app.get("/api/v1/certificados/:id", async (req: Request, res: Response) => {
  */
 app.post(
   "/api/v1/certificados",
-  upload.single("file"),
+  (req: Request, res: Response, next: any) => {
+    upload.single("file")(req, res, (err: any) => {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      next();
+    });
+  },
   async (req: Request, res: Response) => {
     try {
       const file = req.file;
@@ -1006,9 +1692,8 @@ app.post(
       res.status(201).json(certificado);
     } catch (error: any) {
       console.error("Error creating certificado:", error);
-      res.status(500).json({
-        error: "Error al subir certificado",
-        details: error.message,
+      res.status(400).json({
+        error: error.message || "Error al subir certificado",
       });
     }
   }

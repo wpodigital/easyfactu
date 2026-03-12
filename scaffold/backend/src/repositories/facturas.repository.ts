@@ -252,6 +252,17 @@ export class FacturasRepository {
     const result = await this.pool.query(query);
     return parseInt(result.rows[0].count, 10);
   }
+
+  /**
+   * Execute a raw query (for aggregation endpoints that span multiple tables)
+   */
+  async rawQuery<T = Record<string, unknown>>(
+    sql: string,
+    params?: unknown[]
+  ): Promise<T[]> {
+    const result = await this.pool.query(sql, params);
+    return result.rows as T[];
+  }
 }
 
 /**
