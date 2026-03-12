@@ -141,6 +141,15 @@ const authRateLimiter = rateLimit({
   message: { error: "Demasiados intentos. Espera 15 minutos antes de volver a intentarlo." },
 });
 
+/** Rate limiter for general API endpoints: max 100 requests per minute per IP */
+const apiRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Demasiadas solicitudes. Por favor, espera un momento." },
+});
+
 /**
  * POST /api/v1/auth/login
  * Authenticates a user and returns a JWT token.
@@ -338,7 +347,7 @@ app.delete("/api/v1/usuarios/:id", async (req: Request, res: Response) => {
  * POST /api/v1/invoices
  * Create a new invoice (Alta - Registration)
  */
-app.post("/api/v1/invoices", async (req: Request, res: Response) => {
+app.post("/api/v1/invoices", apiRateLimiter, async (req: Request, res: Response) => {
   try {
     const data = req.body;
     
@@ -654,7 +663,7 @@ app.get("/api/v1/invoices", async (req: Request, res: Response) => {
  * GET /api/v1/invoices/:id/pdf
  * Generate and download invoice PDF with AEAT QR code
  */
-app.get("/api/v1/invoices/:id/pdf", async (req: Request, res: Response) => {
+app.get("/api/v1/invoices/:id/pdf", apiRateLimiter, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id, 10);
     const factura = await facturasRepository.findById(id);
@@ -699,6 +708,18 @@ app.get("/api/v1/invoices/:id/pdf", async (req: Request, res: Response) => {
       texto_pie: texto_pie || undefined,
     };
 
+    // Load receptor/destinatario data if it exists
+    const destinatarioResult = await pool.query(
+      'SELECT nombre_razon, nif FROM destinatarios WHERE factura_id = $1 LIMIT 1',
+      [id]
+    );
+    const receptor: ReceptorData | undefined = destinatarioResult.rows.length > 0
+      ? {
+          nombre_razon: destinatarioResult.rows[0].nombre_razon,
+          nif: destinatarioResult.rows[0].nif || undefined,
+        }
+      : undefined;
+
     const facturaData = {
       id: factura.id!,
       num_serie_factura: factura.num_serie_factura,
@@ -710,20 +731,8 @@ app.get("/api/v1/invoices/:id/pdf", async (req: Request, res: Response) => {
       cuota_total: factura.cuota_total,
       huella: factura.huella,
       validation_csv: factura.validation_csv,
-      receptor: undefined as ReceptorData | undefined,
+      receptor,
     };
-
-    // Load receptor/destinatario data if it exists
-    const destinatarioResult = await pool.query(
-      'SELECT nombre_razon, nif FROM destinatarios WHERE factura_id = $1 LIMIT 1',
-      [id]
-    );
-    if (destinatarioResult.rows.length > 0) {
-      facturaData.receptor = {
-        nombre_razon: destinatarioResult.rows[0].nombre_razon,
-        nif: destinatarioResult.rows[0].nif || undefined,
-      };
-    }
 
     const pdfBuffer = await generateInvoicePdf(empresa, facturaData, entorno || 'pruebas');
 
