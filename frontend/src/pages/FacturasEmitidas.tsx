@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileText, Search, Plus, Eye, Trash2, X, CheckCircle, Clock, AlertCircle, XCircle, Send, Download } from 'lucide-react';
 
@@ -76,6 +76,8 @@ export default function FacturasEmitidas() {
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [clientes, setClientes] = useState<ClienteOption[]>([]);
+  // Holds the billing counter used to generate the next invoice number without a re-fetch
+  const proxNumRef = useRef<number>(1);
 
   useEffect(() => {
     fetchFacturas();
@@ -175,29 +177,45 @@ export default function FacturasEmitidas() {
     setForm(baseForm);
     setErrorMsg('');
 
-    // Load emisor data from configuración and client list in parallel
+    // Load emisor data, billing config and client list in parallel
     try {
-      const [configRes, clientesRes] = await Promise.all([
+      const [empresaRes, facturacionRes, clientesRes] = await Promise.all([
         fetch(`${API_URL}/configuracion?tipo=empresa`, { headers: authHeaders() }),
+        fetch(`${API_URL}/configuracion?tipo=facturacion`, { headers: authHeaders() }),
         fetch(`${API_URL}/clientes?limit=200`, { headers: authHeaders() }),
       ]);
-      if (configRes.ok) {
-        const configData = await configRes.json();
-        // configData is an array of { clave, valor } objects
+
+      const parseCfg = (data: unknown): Record<string, string> => {
         const cfg: Record<string, string> = {};
-        if (Array.isArray(configData)) {
-          configData.forEach((item: { clave: string; valor: string }) => { cfg[item.clave] = item.valor; });
-        } else if (configData && typeof configData === 'object') {
-          // getGrouped returns { empresa: [...], ... }
-          const arr = configData.empresa || [];
-          arr.forEach((item: { clave: string; valor: string }) => { cfg[item.clave] = item.valor; });
+        if (Array.isArray(data)) {
+          (data as { clave: string; valor: string }[]).forEach(item => { cfg[item.clave] = item.valor; });
         }
+        return cfg;
+      };
+
+      if (empresaRes.ok) {
+        const empresaCfg = parseCfg(await empresaRes.json());
         setForm(f => ({
           ...f,
-          nif: cfg['empresa_nif'] || '',
-          nombreRazon: cfg['empresa_nombre'] || '',
+          nif: empresaCfg['empresa_nif'] || '',
+          nombreRazon: empresaCfg['empresa_nombre'] || '',
         }));
       }
+
+      if (facturacionRes.ok) {
+        const facturacionCfg = parseCfg(await facturacionRes.json());
+        const serie = facturacionCfg['facturacion_serie_por_defecto'] || 'A';
+        const proxNum = parseInt(facturacionCfg['facturacion_proximo_numero'] || '1', 10);
+        const formato = facturacionCfg['facturacion_formato_numero'] || '{SERIE}-{NUMERO}';
+        const NUM_PADDING = 3;
+        const numPadded = String(proxNum).padStart(NUM_PADDING, '0');
+        const numSerie = formato
+          .replace('{SERIE}', serie)
+          .replace('{NUMERO}', numPadded);
+        proxNumRef.current = proxNum;
+        setForm(f => ({ ...f, numSerie }));
+      }
+
       if (clientesRes.ok) {
         const clientesData = await clientesRes.json();
         const lista: ClienteOption[] = (clientesData.clientes || []).map((c: { id: number; nif: string; nombre_razon_social: string }) => ({
@@ -256,6 +274,13 @@ export default function FacturasEmitidas() {
         body: JSON.stringify(body),
       });
       if (response.ok) {
+        // Increment the next invoice number in configuración (fire-and-forget)
+        const nextNum = proxNumRef.current + 1;
+        fetch(`${API_URL}/configuracion`, {
+          method: 'PUT',
+          headers: authHeaders(),
+          body: JSON.stringify({ facturacion_proximo_numero: String(nextNum) }),
+        }).catch(() => { /* Non-critical */ });
         setShowCreateModal(false);
         fetchFacturas();
         fetchStats();
