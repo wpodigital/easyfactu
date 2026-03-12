@@ -30,7 +30,8 @@ export interface EmpresaConfig {
 export interface FacturaData {
   id: number;
   num_serie_factura: string;
-  fecha_expedicion_factura: string;
+  // PostgreSQL DATE columns may be returned as Date objects or ISO strings.
+  fecha_expedicion_factura: Date | string | null | undefined;
   id_emisor_factura: string;
   nombre_razon_emisor: string;
   tipo_factura: string;
@@ -54,6 +55,60 @@ function num(v: number | string | null | undefined): number {
 }
 
 /**
+ * Converts any date representation to the AEAT-required DD-MM-YYYY format.
+ * Handles: JavaScript Date objects, ISO strings (YYYY-MM-DD or with time
+ * component), already-formatted DD-MM-YYYY strings, and DD/MM/YYYY strings.
+ *
+ * PostgreSQL DATE columns may be returned by node-postgres as either a plain
+ * "YYYY-MM-DD" string or (in some configurations) as a JavaScript Date object,
+ * so we must handle both.
+ */
+function toAeatDate(v: Date | string | null | undefined): string {
+  if (v === null || v === undefined) return '';
+
+  if (v instanceof Date) {
+    if (isNaN(v.getTime())) return '';
+    const d = String(v.getUTCDate()).padStart(2, '0');
+    const m = String(v.getUTCMonth() + 1).padStart(2, '0');
+    const y = v.getUTCFullYear();
+    return `${d}-${m}-${y}`;
+  }
+
+  const s = String(v).trim();
+
+  // ISO format: YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss...
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    const datePart = s.split('T')[0];
+    const [y, m, d] = datePart.split('-');
+    return `${d}-${m}-${y}`;
+  }
+
+  // Already in DD-MM-YYYY format
+  if (/^\d{2}-\d{2}-\d{4}$/.test(s)) {
+    return s;
+  }
+
+  // DD/MM/YYYY display format
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
+    return s.replace(/\//g, '-');
+  }
+
+  return s;
+}
+
+/**
+ * Formats a date as DD/MM/YYYY for display in the PDF body.
+ * Accepts the same inputs as toAeatDate.
+ */
+function toDisplayDate(v: Date | string | null | undefined): string {
+  const aeat = toAeatDate(v);
+  if (/^\d{2}-\d{2}-\d{4}$/.test(aeat)) {
+    return aeat.replace(/-/g, '/');
+  }
+  return '';
+}
+
+/**
  * Builds the AEAT QR verification URL.
  * entorno: 'pruebas' uses the pre-production hostname; anything else → production.
  */
@@ -63,13 +118,8 @@ function buildQrUrl(factura: FacturaData, entorno: string): string {
       ? 'https://prewww2.aeat.es'
       : 'https://www2.agenciatributaria.gob.es';
 
-  // fecha must be DD-MM-YYYY
-  const rawFecha = factura.fecha_expedicion_factura;
-  let fechaFmt = rawFecha;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(rawFecha)) {
-    const [y, m, d] = rawFecha.split('-');
-    fechaFmt = `${d}-${m}-${y}`;
-  }
+  // fecha must be DD-MM-YYYY as required by AEAT
+  const fechaFmt = toAeatDate(factura.fecha_expedicion_factura);
 
   const importe = num(factura.importe_total).toFixed(2);
 
@@ -89,16 +139,6 @@ function eur(value?: number): string {
     style: 'currency',
     currency: 'EUR',
   }).format(value);
-}
-
-/** Formats YYYY-MM-DD as DD/MM/YYYY. */
-function fmtFecha(raw: string): string {
-  if (!raw) return '';
-  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
-    const [y, m, d] = raw.split('T')[0].split('-');
-    return `${d}/${m}/${y}`;
-  }
-  return raw;
 }
 
 /**
@@ -173,7 +213,7 @@ export async function generateInvoicePdf(
     };
 
     drawDetail('Nº Factura:', factura.num_serie_factura);
-    drawDetail('Fecha:', fmtFecha(factura.fecha_expedicion_factura));
+    drawDetail('Fecha:', toDisplayDate(factura.fecha_expedicion_factura));
     drawDetail('Tipo:', factura.tipo_factura);
     if (factura.validation_csv) drawDetail('CSV AEAT:', factura.validation_csv);
 

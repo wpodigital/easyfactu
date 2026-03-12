@@ -258,8 +258,17 @@ export default function FacturasEmitidas() {
   const formatCurrency = (n?: number) =>
     (n ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 
-  const formatDate = (d?: string) =>
-    d ? new Date(d).toLocaleDateString('es-ES') : '-';
+  // Parse date without timezone shifting: split YYYY-MM-DD manually so the
+  // date is not treated as UTC midnight (which would shift by 1 day in UTC+N).
+  const formatDate = (d?: string): string => {
+    if (!d) return '-';
+    const s = d.split('T')[0];
+    const parts = s.split('-');
+    if (parts.length === 3 && parts[0].length === 4) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return d;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
