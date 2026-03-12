@@ -124,7 +124,14 @@
     "iva4": "4% (Superreduzido)",
     "iva10": "10% (Reduzido)",
     "iva21": "21% (Normal)",
-    "requiredFields": "Por favor, preencha todos os campos obrigatórios."
+    "requiredFields": "Por favor, preencha todos os campos obrigatórios.",
+    "sectionReceptor": "Dados do Receptor (Destinatário)",
+    "selectCliente": "Selecionar cliente da base de dados",
+    "selectClientePlaceholder": "— Sem cliente selecionado (entrada manual) —",
+    "nifReceptor": "NIF / NIPC do Receptor",
+    "nifReceptorPlaceholder": "Ex. B87654321",
+    "nombreReceptor": "Nome / Razão Social do Receptor",
+    "nombreReceptorPlaceholder": "Nome do cliente receptor"
   },
   "facturasRecibidas": {
     "title": "Faturas Recebidas",

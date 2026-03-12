@@ -29,6 +29,12 @@ interface Stats {
   importeTotal: number;
 }
 
+interface ClienteOption {
+  id: number;
+  nif: string;
+  nombre_razon_social: string;
+}
+
 interface NuevaFacturaForm {
   numSerie: string;
   nif: string;
@@ -37,6 +43,10 @@ interface NuevaFacturaForm {
   tipoFactura: string;
   baseImponible: string;
   tipoIva: string;
+  // Receptor (destinatario)
+  receptorClienteId: string;   // selected from dropdown ('' = manual)
+  nifReceptor: string;
+  nombreReceptor: string;
 }
 
 const DEFAULT_FORM: NuevaFacturaForm = {
@@ -47,6 +57,9 @@ const DEFAULT_FORM: NuevaFacturaForm = {
   tipoFactura: 'F1',
   baseImponible: '',
   tipoIva: '21',
+  receptorClienteId: '',
+  nifReceptor: '',
+  nombreReceptor: '',
 };
 
 export default function FacturasEmitidas() {
@@ -62,6 +75,7 @@ export default function FacturasEmitidas() {
   const [form, setForm] = useState<NuevaFacturaForm>(DEFAULT_FORM);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [clientes, setClientes] = useState<ClienteOption[]>([]);
 
   useEffect(() => {
     fetchFacturas();
@@ -155,9 +169,48 @@ export default function FacturasEmitidas() {
     }
   };
 
-  const handleOpenCreate = () => {
-    setForm(DEFAULT_FORM);
+  const handleOpenCreate = async () => {
+    // Reset to defaults first (today's date, empty fields)
+    const baseForm = { ...DEFAULT_FORM, fecha: new Date().toISOString().split('T')[0] };
+    setForm(baseForm);
     setErrorMsg('');
+
+    // Load emisor data from configuración and client list in parallel
+    try {
+      const [configRes, clientesRes] = await Promise.all([
+        fetch(`${API_URL}/configuracion?tipo=empresa`, { headers: authHeaders() }),
+        fetch(`${API_URL}/clientes?limit=200`, { headers: authHeaders() }),
+      ]);
+      if (configRes.ok) {
+        const configData = await configRes.json();
+        // configData is an array of { clave, valor } objects
+        const cfg: Record<string, string> = {};
+        if (Array.isArray(configData)) {
+          configData.forEach((item: { clave: string; valor: string }) => { cfg[item.clave] = item.valor; });
+        } else if (configData && typeof configData === 'object') {
+          // getGrouped returns { empresa: [...], ... }
+          const arr = configData.empresa || [];
+          arr.forEach((item: { clave: string; valor: string }) => { cfg[item.clave] = item.valor; });
+        }
+        setForm(f => ({
+          ...f,
+          nif: cfg['empresa_nif'] || '',
+          nombreRazon: cfg['empresa_nombre'] || '',
+        }));
+      }
+      if (clientesRes.ok) {
+        const clientesData = await clientesRes.json();
+        const lista: ClienteOption[] = (clientesData.clientes || []).map((c: { id: number; nif: string; nombre_razon_social: string }) => ({
+          id: c.id,
+          nif: c.nif,
+          nombre_razon_social: c.nombre_razon_social,
+        }));
+        setClientes(lista);
+      }
+    } catch {
+      // Non-critical: proceed with empty defaults
+    }
+
     setShowCreateModal(true);
   };
 
@@ -180,7 +233,7 @@ export default function FacturasEmitidas() {
     setSaving(true);
     setErrorMsg('');
     try {
-      const body = {
+      const body: Record<string, unknown> = {
         NumeroSerie: form.numSerie.trim(),
         NIF: form.nif.trim(),
         NombreRazon: form.nombreRazon.trim(),
@@ -190,6 +243,13 @@ export default function FacturasEmitidas() {
         CuotaTotal: cuotaIva(),
         Operacion: 'A0',
       };
+      // Add receptor if provided
+      const nifRec = form.nifReceptor.trim();
+      const nombreRec = form.nombreReceptor.trim();
+      if (nombreRec) {
+        body.NombreReceptor = nombreRec;
+        if (nifRec) body.NifReceptor = nifRec;
+      }
       const response = await fetch(`${API_URL}/invoices`, {
         method: 'POST',
         headers: authHeaders(),
@@ -566,6 +626,65 @@ export default function FacturasEmitidas() {
                     value={cuotaIva().toFixed(2)}
                     className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-600 dark:text-gray-300 text-gray-500"
                   />
+                </div>
+              </div>
+
+              {/* Receptor / Destinatario */}
+              <div className="border-t dark:border-gray-700 pt-4">
+                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{t('facturasEmitidas.sectionReceptor')}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      {t('facturasEmitidas.selectCliente')}
+                    </label>
+                    <select
+                      value={form.receptorClienteId}
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (val === '') {
+                          setForm(f => ({ ...f, receptorClienteId: '', nifReceptor: '', nombreReceptor: '' }));
+                        } else {
+                          const found = clientes.find(c => String(c.id) === val);
+                          setForm(f => ({
+                            ...f,
+                            receptorClienteId: val,
+                            nifReceptor: found?.nif || '',
+                            nombreReceptor: found?.nombre_razon_social || '',
+                          }));
+                        }
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                    >
+                      <option value="">{t('facturasEmitidas.selectClientePlaceholder')}</option>
+                      {clientes.map(c => (
+                        <option key={c.id} value={String(c.id)}>{c.nombre_razon_social} ({c.nif})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      {t('facturasEmitidas.nifReceptor')}
+                    </label>
+                    <input
+                      type="text"
+                      value={form.nifReceptor}
+                      onChange={e => setForm(f => ({ ...f, receptorClienteId: '', nifReceptor: e.target.value }))}
+                      placeholder={t('facturasEmitidas.nifReceptorPlaceholder')}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      {t('facturasEmitidas.nombreReceptor')}
+                    </label>
+                    <input
+                      type="text"
+                      value={form.nombreReceptor}
+                      onChange={e => setForm(f => ({ ...f, receptorClienteId: '', nombreReceptor: e.target.value }))}
+                      placeholder={t('facturasEmitidas.nombreReceptorPlaceholder')}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                    />
+                  </div>
                 </div>
               </div>
 

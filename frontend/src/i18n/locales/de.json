@@ -124,7 +124,14 @@
     "iva4": "4% (Super-ermäßigt)",
     "iva10": "10% (Ermäßigt)",
     "iva21": "21% (Standard)",
-    "requiredFields": "Bitte füllen Sie alle Pflichtfelder aus."
+    "requiredFields": "Bitte füllen Sie alle Pflichtfelder aus.",
+    "sectionReceptor": "Empfängerdaten (Destinatario)",
+    "selectCliente": "Kunden aus der Datenbank auswählen",
+    "selectClientePlaceholder": "— Kein Kunde ausgewählt (manuelle Eingabe) —",
+    "nifReceptor": "USt-IdNr. / Steuernummer Empfänger",
+    "nifReceptorPlaceholder": "z.B. B87654321",
+    "nombreReceptor": "Name / Firmenname des Empfängers",
+    "nombreReceptorPlaceholder": "Name des Empfänger-Kunden"
   },
   "facturasRecibidas": {
     "title": "Erhaltene Rechnungen",

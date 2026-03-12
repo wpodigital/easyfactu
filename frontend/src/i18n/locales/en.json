@@ -124,7 +124,14 @@
     "iva4": "4% (Super-reduced)",
     "iva10": "10% (Reduced)",
     "iva21": "21% (Standard)",
-    "requiredFields": "Please fill in all required fields."
+    "requiredFields": "Please fill in all required fields.",
+    "sectionReceptor": "Recipient Data (Destinatario)",
+    "selectCliente": "Select client from database",
+    "selectClientePlaceholder": "— No client selected (manual entry) —",
+    "nifReceptor": "Recipient NIF / Tax ID",
+    "nifReceptorPlaceholder": "e.g. B87654321",
+    "nombreReceptor": "Recipient Name / Company",
+    "nombreReceptorPlaceholder": "Recipient client name"
   },
   "facturasRecibidas": {
     "title": "Received Invoices",

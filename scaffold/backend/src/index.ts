@@ -7,7 +7,7 @@ import { facturasRecibidasRepository } from "./repositories/facturas_recibidas.r
 import { configuracionRepository } from "./repositories/configuracion.repository";
 import { certificadosRepository } from "./repositories/certificados.repository";
 import { usuariosRepository } from "./repositories/usuarios.repository";
-import { generateInvoicePdf } from "./services/pdf.service";
+import { generateInvoicePdf, ReceptorData } from "./services/pdf.service";
 import multer from "multer";
 import { pool } from "./config/database";
 import path from "path";
@@ -355,6 +355,10 @@ app.post("/api/v1/invoices", async (req: Request, res: Response) => {
       estado_registro: 'Correcta',  // Initial state
     };
     
+    // Extract receptor/destinatario data if provided
+    const nifReceptor: string | null = data.NifReceptor || data.nifReceptor || null;
+    const nombreReceptor: string | null = data.NombreReceptor || data.nombreReceptor || null;
+
     // Get previous invoice for chaining
     const previousInvoice = await facturasRepository.getLastForChaining(
       facturaData.id_emisor_factura
@@ -377,6 +381,14 @@ app.post("/api/v1/invoices", async (req: Request, res: Response) => {
     
     // Insert into database
     const factura = await facturasRepository.create(facturaData);
+
+    // Insert receptor/destinatario if provided
+    if (nombreReceptor && factura.id) {
+      await pool.query(
+        `INSERT INTO destinatarios (factura_id, nombre_razon, nif) VALUES ($1, $2, $3)`,
+        [factura.id, nombreReceptor, nifReceptor || null]
+      );
+    }
     
     res.status(201).json({
       id: factura.id,
@@ -698,7 +710,20 @@ app.get("/api/v1/invoices/:id/pdf", async (req: Request, res: Response) => {
       cuota_total: factura.cuota_total,
       huella: factura.huella,
       validation_csv: factura.validation_csv,
+      receptor: undefined as ReceptorData | undefined,
     };
+
+    // Load receptor/destinatario data if it exists
+    const destinatarioResult = await pool.query(
+      'SELECT nombre_razon, nif FROM destinatarios WHERE factura_id = $1 LIMIT 1',
+      [id]
+    );
+    if (destinatarioResult.rows.length > 0) {
+      facturaData.receptor = {
+        nombre_razon: destinatarioResult.rows[0].nombre_razon,
+        nif: destinatarioResult.rows[0].nif || undefined,
+      };
+    }
 
     const pdfBuffer = await generateInvoicePdf(empresa, facturaData, entorno || 'pruebas');
 

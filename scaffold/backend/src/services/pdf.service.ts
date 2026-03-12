@@ -27,6 +27,11 @@ export interface EmpresaConfig {
   texto_pie?: string;
 }
 
+export interface ReceptorData {
+  nif?: string;
+  nombre_razon: string;
+}
+
 export interface FacturaData {
   id: number;
   num_serie_factura: string;
@@ -41,6 +46,8 @@ export interface FacturaData {
   cuota_total?: number | string | null;
   huella?: string;
   validation_csv?: string;
+  // Optional receptor/destinatario data
+  receptor?: ReceptorData | null;
 }
 
 /**
@@ -201,6 +208,17 @@ export async function generateInvoicePdf(
     if (locLine) { doc.text(locLine, 40, y); y += 12; }
     if (empresa.telefono) { doc.text(`Tel: ${empresa.telefono}`, 40, y); y += 12; }
     if (empresa.email) { doc.text(empresa.email, 40, y); y += 12; }
+
+    // ── Receptor block (below issuer, left column) ──────────────────
+    if (factura.receptor) {
+      y += 6;
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(darkGray)
+        .text('DATOS DEL RECEPTOR', 40, y);
+      y += 14;
+      doc.font('Helvetica').fontSize(9).fillColor('#34495e');
+      if (factura.receptor.nif) { doc.text(`NIF: ${factura.receptor.nif}`, 40, y); y += 12; }
+      doc.text(factura.receptor.nombre_razon, 40, y); y += 12;
+    }
 
     // ── Invoice details block (right) ───────────────────────────────
     let yr = 100;
